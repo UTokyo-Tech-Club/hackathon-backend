@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"fmt"
+	firebaseAuth "hackathon-backend/firebase"
 	"hackathon-backend/utils/logger"
 	"net/http"
 	"sync"
@@ -15,6 +16,11 @@ type ClientObject struct {
 	Username        string `json:"userName,omitempty"`
 	AuthToken       string `json:"authToken,omitempty"`
 	ClientWebSocket *websocket.Conn
+}
+
+type Message struct {
+	Type string `json:"type"`
+	Data string `json:"data"`
 }
 
 type WebSocketServer struct {
@@ -100,7 +106,8 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	var preListen *ClientObject
+	fb := firebaseAuth.InitFirebase()
+	isAuth := false
 	// defer closeConnection(wss, preListen)
 
 	for {
@@ -110,10 +117,30 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 			break
 		}
 
-		err = json.Unmarshal(p, &preListen)
+		var msg *Message
+		err = json.Unmarshal(p, &msg)
 		if err != nil {
 			logger.Error(err)
 			break
 		}
+
+		// Guard until authentication
+		if !isAuth {
+
+			if msg.Type != "auth" {
+				logger.Error("Must authenticate first")
+				break
+			}
+
+			idToken, err := firebaseAuth.ValidateToken(fb, msg.Data)
+			if err != nil {
+				logger.Error("Error verifying token:", err)
+				return
+			}
+
+			isAuth = true
+			logger.Info("Authenticated user: ", idToken.UID)
+		}
+
 	}
 }
