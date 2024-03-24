@@ -1,25 +1,31 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
+	"hackathon-backend/utils/logger"
 	"net/http"
-	"time"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 type ClientObject struct {
-	JoinedAt        time.Time `json:"joinedAt,omitempty"`
-	IPAddress       string    `json:"ipAddress,omitempty"`
-	Username        string    `json:"userName,omitempty"`
-	EntryToken      string    `json:"entryToken,omitempty"`
+	Email           string `json:"email,omitempty"`
+	Username        string `json:"userName,omitempty"`
+	AuthToken       string `json:"authToken,omitempty"`
 	ClientWebSocket *websocket.Conn
 }
 
 type WebSocketServer struct {
-	clients         map[*ClientObject]bool
-	clientTokenMap  map[string]*ClientObject
-	requestUpgrader websocket.Upgrader
+	Clients          map[*ClientObject]bool
+	ClientTokenMap   map[string]*ClientObject
+	registerClient   chan *ClientObject
+	unregisterClient chan *ClientObject
+
+	getUpgrader websocket.Upgrader
+
+	lock sync.Mutex
 }
 
 func Init() *WebSocketServer {
@@ -29,16 +35,85 @@ func Init() *WebSocketServer {
 	}
 
 	return &WebSocketServer{
-		clients:         make(map[*ClientObject]bool),
-		clientTokenMap:  make(map[string]*ClientObject),
-		requestUpgrader: upgrader,
+		Clients:          make(map[*ClientObject]bool),
+		ClientTokenMap:   make(map[string]*ClientObject),
+		registerClient:   make(chan *ClientObject),
+		unregisterClient: make(chan *ClientObject),
+
+		getUpgrader: upgrader,
+
+		lock: sync.Mutex{},
 	}
 }
 
-func (wss *WebSocketServer) SetupServer() {
+func (wss *WebSocketServer) SetupRoutes() {
 	http.HandleFunc("/", wss.handleHomePage)
+	http.HandleFunc("/ws", wss.handleEndPoint)
+}
+
+func (wss *WebSocketServer) SetupEventListeners() {
+
+	go func() {
+		for {
+			select {
+			case client := <-wss.registerClient:
+				wss.lock.Lock()
+				wss.Clients[client] = true
+				wss.ClientTokenMap[client.AuthToken] = client
+				wss.lock.Unlock()
+			case client := <-wss.unregisterClient:
+				wss.lock.Lock()
+				if _, ok := wss.Clients[client]; ok {
+					delete(wss.Clients, client)
+					client.ClientWebSocket.Close()
+				}
+				wss.lock.Unlock()
+			}
+		}
+	}()
+
 }
 
 func (wss *WebSocketServer) handleHomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Home Page")
+}
+
+// func closeConnection(wss *WebSocketServer, client *ClientObject) {
+// 	logger := logger.NewLogger()
+// 	err := client.ClientWebSocket.Close()
+// 	if err != nil {
+// 		logger.Error(err)
+// 	}
+// 	delete(wss.Clients, client)
+// 	delete(wss.ClientTokenMap, client.AuthToken)
+// }
+
+func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Request) {
+	logger := logger.NewLogger()
+	logger.Info("WebSocket Endpoint Hit")
+
+	wss.getUpgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
+	ws, err := wss.getUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	var preListen *ClientObject
+	// defer closeConnection(wss, preListen)
+
+	for {
+		_, p, err := ws.ReadMessage()
+		if err != nil {
+			logger.Error(err)
+			break
+		}
+
+		err = json.Unmarshal(p, &preListen)
+		if err != nil {
+			logger.Error(err)
+			break
+		}
+	}
 }

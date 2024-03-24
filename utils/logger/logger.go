@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -38,43 +39,39 @@ func setLogLevel() int {
 }
 
 func NewLogger() *Logger {
+	l := log.New(os.Stdout, "", 2|log.Lshortfile) // include timestamp and line number
 	return &Logger{
-		logger: log.New(os.Stdout, "", log.LstdFlags),
+		logger: l,
 		level:  setLogLevel(),
 	}
 }
 
 func (l *Logger) Fatal(v ...interface{}) {
 	if l.level >= ERROR {
-		l.logger.SetPrefix("[FATAL] ")
-		l.logger.Fatalln(v...)
+		l.logger.Output(2, "[FATAL] "+fmt.Sprintln(v...))
 	}
 }
 
 func (l *Logger) Error(v ...interface{}) {
 	if l.level >= ERROR {
-		l.logger.SetPrefix("[ERROR] ")
-		l.logger.Println(v...)
+		l.logger.Output(2, "[ERROR] "+fmt.Sprintln(v...))
 	}
 }
 
 func (l *Logger) Warning(v ...interface{}) {
 	if l.level >= WARNING {
-		l.logger.SetPrefix("[WARNING] ")
-		l.logger.Println(v...)
+		l.logger.Output(2, "[WARNING] "+fmt.Sprintln(v...))
 	}
 }
 
 func (l *Logger) Info(v ...interface{}) {
 	if l.level >= INFO {
-		l.logger.SetPrefix("[INFO] ")
-		l.logger.Println(v...)
+		l.logger.Output(2, "[INFO] "+fmt.Sprintln(v...))
 	}
 }
 
 func (l *Logger) Debug(v ...interface{}) {
 	if l.level >= DEBUG {
-		l.logger.SetPrefix("[DEBUG] ")
-		l.logger.Println(v...)
+		l.logger.Output(2, "[DEBUG] "+fmt.Sprintln(v...))
 	}
 }
