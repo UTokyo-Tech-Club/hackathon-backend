@@ -14,6 +14,11 @@ const (
 	DEBUG
 )
 
+type Logger struct {
+	logger *log.Logger
+	level  int
+}
+
 func setLogLevel() int {
 	logLevel := strings.ToUpper(os.Getenv("LOG_LEVEL"))
 	switch logLevel {
@@ -30,11 +35,6 @@ func setLogLevel() int {
 	default:
 		return INFO
 	}
-}
-
-type Logger struct {
-	logger *log.Logger
-	level  int
 }
 
 func NewLogger() *Logger {
