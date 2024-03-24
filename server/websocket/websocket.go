@@ -108,6 +108,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 
 	fb := firebaseAuth.InitFirebase()
 	isAuth := false
+	client := &ClientObject{}
 	// defer closeConnection(wss, preListen)
 
 	for {
@@ -139,8 +140,12 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 			}
 
 			isAuth = true
+			client.Username = idToken.UID
+			wss.registerClient <- client
+
 			logger.Info("Authenticated user: ", idToken.UID)
 		}
 
 	}
+
 }
