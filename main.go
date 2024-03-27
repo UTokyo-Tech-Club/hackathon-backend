@@ -1,6 +1,7 @@
 package main
 
 import (
+	"hackathon-backend/redis"
 	"hackathon-backend/server/websocket"
 	"hackathon-backend/utils/logger"
 	"net/http"
@@ -26,6 +27,9 @@ func main() {
 	if isPortEmpty {
 		logger.Fatal("PORT is empty")
 	}
+
+	redis.InitRedis()
+	redis.IncrementRedis()
 
 	wss := websocket.Init()
 	wss.SetupRoutes()
