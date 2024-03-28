@@ -1,6 +1,6 @@
 FROM golang:1.22 AS builder
 
-RUN apt-get install ca-certificates -y
+RUN apt-get install -y ca-certificates openssl
 
 WORKDIR /app
 
