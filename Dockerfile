@@ -1,5 +1,7 @@
 FROM golang:1.22 AS builder
 
+RUN apt-get install ca-certificates -y
+
 WORKDIR /app
 
 COPY go.mod ./
