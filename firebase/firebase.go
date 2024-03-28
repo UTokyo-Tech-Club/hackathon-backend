@@ -14,7 +14,7 @@ func InitFirebase() *firebase.App {
 	opt := option.WithCredentialsFile(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON"))
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
-		logger.Fatal("Error initializing firebase: ", err)
+		logger.Error("Error initializing firebase: ", err)
 	}
 	logger.Info("Firebase initialized")
 	return fb

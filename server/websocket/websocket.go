@@ -18,11 +18,6 @@ type ClientObject struct {
 	ClientWebSocket *websocket.Conn
 }
 
-type Message struct {
-	Type string `json:"type"`
-	Data string `json:"data"`
-}
-
 type WebSocketServer struct {
 	Clients          map[*ClientObject]bool
 	ClientTokenMap   map[string]*ClientObject
@@ -59,6 +54,7 @@ func (wss *WebSocketServer) SetupRoutes() {
 
 func (wss *WebSocketServer) SetupEventListeners() {
 
+	// Client Registration
 	go func() {
 		for {
 			select {
@@ -107,8 +103,9 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 
 	fb := firebaseAuth.InitFirebase()
 	isAuth := false
+
 	client := &ClientObject{}
-	// defer closeConnection(wss, preListen)
+	defer client.ClientWebSocket.Close()
 
 	for {
 		_, p, err := ws.ReadMessage()
