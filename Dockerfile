@@ -1,6 +1,4 @@
-FROM golang:1.22 AS builder
-
-RUN apt-get install -y ca-certificates openssl
+FROM golang:1.22-alpine AS builder
 
 WORKDIR /app
 
@@ -16,5 +14,7 @@ FROM scratch
 COPY --from=builder /app/myserver /myserver
 
 EXPOSE 8080
+
+RUN apk add --no-cache ca-certificates
 
 CMD ["./myserver"]
