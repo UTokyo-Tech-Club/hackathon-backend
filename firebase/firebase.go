@@ -19,8 +19,15 @@ func Init() *firebase.App {
 	// } else {
 	// }
 	// opt := option.WithCredentialsFile(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON"))
+	// var serviceAccount map[string]interface{}
+	// jsonBytes := []byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT"))
+	// err := json.Unmarshal(jsonBytes, &serviceAccount)
+
 	opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT")))
+	// opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT")))
+	logger.Info("opt: ", opt)
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
+	logger.Info("fb: ", fb)
 	if err != nil {
 		logger.Error("Error initializing firebase: ", err)
 	}
