@@ -11,7 +11,7 @@ COPY . ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -v -o myserver
 
-# FROM scratch
+FROM scratch
 
 COPY --from=builder /app/myserver /myserver
 
