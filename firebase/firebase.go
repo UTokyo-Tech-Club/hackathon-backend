@@ -30,11 +30,15 @@ func Init() *firebase.App {
 
 func ValidateToken(fb *firebase.App, authToken string) (*auth.Token, error) {
 	client, err := fb.Auth(context.Background())
+	logger.Info("Client: ", client)
 	if err != nil {
+		logger.Error("client error: ", err)
 		return nil, err
 	}
 	token, err := client.VerifyIDToken(context.Background(), authToken)
+	logger.Info("Token: ", token)
 	if err != nil {
+		logger.Error("validation error: ", err)
 		return nil, err
 	}
 	return token, nil

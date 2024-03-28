@@ -129,7 +129,6 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 				break
 			}
 
-			logger.Info("AuthToken: ", msg.Data)
 			idToken, err := firebaseAuth.ValidateToken(fb, msg.Data)
 			if err != nil {
 				logger.Error("Error verifying token:", err)
