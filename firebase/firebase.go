@@ -26,6 +26,7 @@ func Init() *firebase.App {
 	opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT")))
 	// opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT")))
 	logger.Info("opt: ", opt)
+	logger.Info("background: ", context.Background())
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
 	logger.Info("fb: ", fb)
 	if err != nil {
@@ -36,6 +37,7 @@ func Init() *firebase.App {
 }
 
 func ValidateToken(fb *firebase.App, authToken string) (*auth.Token, error) {
+	logger.Info("background: ", context.Background())
 	client, err := fb.Auth(context.Background())
 	logger.Info("Client: ", client)
 	if err != nil {
