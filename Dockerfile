@@ -13,6 +13,8 @@ FROM scratch
 
 COPY --from=builder /app/myserver /myserver
 
+COPY --from=builder /app/firebase/firebase.json /firebase/firebase.json
+
 EXPOSE 8080
 
 CMD ["./myserver"]

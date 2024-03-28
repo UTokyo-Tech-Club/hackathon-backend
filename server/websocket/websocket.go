@@ -101,7 +101,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	fb := firebaseAuth.InitFirebase()
+	fb := firebaseAuth.Init()
 	isAuth := false
 
 	client := &ClientObject{}

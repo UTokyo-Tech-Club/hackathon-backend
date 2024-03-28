@@ -10,15 +10,15 @@ import (
 	"google.golang.org/api/option"
 )
 
-func InitFirebase() *firebase.App {
-	isDeployed := os.Getenv("IS_DEPLOYED")
+func Init() *firebase.App {
+	// isDeployed := os.Getenv("IS_DEPLOYED")
 
-	var opt option.ClientOption
-	if isDeployed == "true" {
-		opt = option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")))
-	} else {
-		opt = option.WithCredentialsFile(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON"))
-	}
+	// var opt option.ClientOption
+	// if isDeployed == "true" {
+	// 	opt = option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON")))
+	// } else {
+	// }
+	opt := option.WithCredentialsFile(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON"))
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		logger.Error("Error initializing firebase: ", err)

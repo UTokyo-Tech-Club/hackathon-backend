@@ -15,7 +15,7 @@ import (
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		logger.Error("Error loading .env file (ignore if called on GCP)", err)
+		logger.Warning("Error loading .env file (ignore if called on GCP)", err)
 	}
 
 	mysql.Init()
