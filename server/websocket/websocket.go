@@ -95,7 +95,6 @@ func (wss *WebSocketServer) handleHomePage(w http.ResponseWriter, r *http.Reques
 // }
 
 func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Request) {
-	logger := logger.NewLogger()
 	logger.Info("WebSocket Endpoint Hit")
 
 	wss.getUpgrader.CheckOrigin = func(r *http.Request) bool { return true }

@@ -10,9 +10,7 @@ import (
 
 var redisClient *redis.Client
 
-func InitRedis() {
-	logger := logger.NewLogger()
-
+func Init() {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
 		logger.Fatal("REDIS_ADDR environment variable not set")
@@ -31,8 +29,6 @@ func InitRedis() {
 }
 
 func IncrementRedis() {
-	logger := logger.NewLogger()
-
 	ctx := context.Background()
 
 	// Increment visit count.

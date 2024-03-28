@@ -11,8 +11,6 @@ import (
 )
 
 func InitFirebase() *firebase.App {
-	logger := logger.NewLogger()
-
 	opt := option.WithCredentialsFile(os.Getenv("FIREBASE_SERVICE_ACCOUNT_JSON"))
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {

@@ -1,7 +1,8 @@
 package main
 
 import (
-	"hackathon-backend/redis"
+	"hackathon-backend/mysql"
+	// "hackathon-backend/redis"
 	"hackathon-backend/server/websocket"
 	"hackathon-backend/utils/logger"
 	"net/http"
@@ -14,22 +15,20 @@ import (
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		logger.NewLogger().Fatal("Error loading .env file", err)
+		logger.Error("Error loading .env file (ignore if called on GCP)", err)
 	}
+
+	mysql.Init()
+	// redis.Init()
 }
 
 func main() {
-	logger := logger.NewLogger()
-
 	port := os.Getenv("PORT")
 	isPortEmpty := port == ""
 
 	if isPortEmpty {
 		logger.Fatal("PORT is empty")
 	}
-
-	redis.InitRedis()
-	redis.IncrementRedis()
 
 	wss := websocket.Init()
 	wss.SetupRoutes()
