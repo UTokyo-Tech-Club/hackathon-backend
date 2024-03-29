@@ -17,7 +17,7 @@ RUN go build -o myserver
 
 RUN apk --no-cache add ca-certificates
 
-COPY --from=builder /app/myserver /myserver
+# COPY --from=builder /app/myserver /myserver
 
 # EXPOSE 8080
 
