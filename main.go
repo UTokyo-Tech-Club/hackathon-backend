@@ -2,7 +2,7 @@ package main
 
 import (
 	"hackathon-backend/mysql"
-	// "hackathon-backend/redis"
+	"hackathon-backend/server"
 	"hackathon-backend/server/websocket"
 	"hackathon-backend/utils/logger"
 	"net/http"
@@ -19,7 +19,7 @@ func init() {
 	}
 
 	mysql.Init()
-	// redis.Init()
+	server.SetupDatabase()
 }
 
 func main() {

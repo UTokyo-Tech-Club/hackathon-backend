@@ -14,16 +14,15 @@ func NewController(usecase Usecase) *Controller {
 	}
 }
 
-func (c *Controller) Post(userUID string, data []byte) (string, error) {
+func (c *Controller) Post(userUID string, data []byte) error {
 	var tweetData *TweetData
 	if err := json.Unmarshal(data, &tweetData); err != nil {
-		return "", err
+		return err
 	}
 
-	msg, err := c.usecase.Post(userUID, data)
-	if err != nil {
-		return "", err
+	if err := c.usecase.Post(userUID, data); err != nil {
+		return err
 	}
 
-	return msg, nil
+	return nil
 }

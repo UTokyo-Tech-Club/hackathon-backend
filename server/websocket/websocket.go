@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	firebaseAuth "hackathon-backend/firebase"
+	"hackathon-backend/server"
 	"hackathon-backend/server/user"
 	"hackathon-backend/utils/logger"
 	"net/http"
@@ -99,16 +100,6 @@ func (wss *WebSocketServer) handleHomePage(w http.ResponseWriter, r *http.Reques
 	fmt.Fprintf(w, "Home Page")
 }
 
-// func closeConnection(wss *WebSocketServer, client *ClientObject) {
-// 	logger := logger.NewLogger()
-// 	err := client.ClientWebSocket.Close()
-// 	if err != nil {
-// 		logger.Error(err)
-// 	}
-// 	delete(wss.Clients, client)
-// 	delete(wss.ClientTokenMap, client.AuthToken)
-// }
-
 func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Request) {
 	logger.Info("WebSocket Endpoint Hit")
 
@@ -132,8 +123,10 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		wss.unregisterClient <- client
 	}()
 
-	// Setup handler
-	userController := user.NewController(user.NewUsecase(user.NewDao()))
+	// Setup database
+
+	// Setup ctl
+	ctl := server.NewControllers()
 
 	for {
 		// Read message
@@ -176,8 +169,13 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		case "user":
 			switch msg.Action {
 			case "auth":
-				userController.Register(idToken.UID, idToken.Claims["email"].(string))
+				ctl.User.Register(idToken.UID, idToken.Claims["email"].(string))
 
+			}
+		case "tweet":
+			switch msg.Action {
+			case "post":
+				ctl.Tweet.Post(idToken.UID, data)
 			}
 		}
 
