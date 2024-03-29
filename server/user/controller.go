@@ -17,5 +17,7 @@ func (c *Controller) Register(uid string, email string) error {
 		logger.Error(err)
 		return err
 	}
+
+	logger.Info("Registered user: ", uid)
 	return nil
 }

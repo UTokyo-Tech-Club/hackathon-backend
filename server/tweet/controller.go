@@ -2,6 +2,7 @@ package tweet
 
 import (
 	"encoding/json"
+	"hackathon-backend/utils/logger"
 )
 
 type Controller struct {
@@ -24,5 +25,6 @@ func (c *Controller) Post(userUID string, data []byte) error {
 		return err
 	}
 
+	logger.Info("Posted tweet: ", userUID)
 	return nil
 }

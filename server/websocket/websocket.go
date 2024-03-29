@@ -158,10 +158,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 				continue
 			}
 
-			uid := idToken.UID
-
 			wss.registerClient <- client
-			logger.Info("Authenticated user: ", uid)
 		}
 
 		// Process messages
@@ -170,7 +167,6 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 			switch msg.Action {
 			case "auth":
 				ctl.User.Register(idToken.UID, idToken.Claims["email"].(string))
-
 			}
 		case "tweet":
 			switch msg.Action {
