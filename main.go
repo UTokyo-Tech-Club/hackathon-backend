@@ -31,7 +31,7 @@ func main() {
 	}
 
 	wss := websocket.Init()
-	wss.SetupRoutes()
+	wss.SetupRouter()
 	wss.SetupEventListeners()
 	logger.Info("Server is running on port " + port)
 	logger.Fatal(http.ListenAndServe(":"+port, nil))

@@ -3,8 +3,6 @@ package user
 import (
 	"encoding/json"
 	"time"
-
-	firebase "firebase.google.com/go"
 )
 
 type UserData struct {
@@ -19,9 +17,4 @@ type UserData struct {
 type FirebaseUserData struct {
 	UID   string `json:"uid"`
 	Email string `json:"email"`
-}
-
-type UserAuth struct {
-	FirebaseApp *firebase.App `json:"firebaseApp"`
-	Token       string        `json:"token"`
 }

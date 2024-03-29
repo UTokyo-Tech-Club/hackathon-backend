@@ -1,9 +1,12 @@
 package user
 
-import "time"
+import (
+	"hackathon-backend/utils/logger"
+	"time"
+)
 
 type Usecase interface {
-	Register(uid string, email string) (string, error)
+	Register(uid string, email string) error
 }
 
 type usecase struct {
@@ -16,18 +19,19 @@ func NewUsecase(dao Dao) Usecase {
 	}
 }
 
-func (u *usecase) Register(uid string, email string) (string, error) {
+func (u *usecase) Register(uid string, email string) error {
 	userData := UserData{
 		UID:            uid,
 		Username:       email,
 		Email:          email,
 		ProfileContent: nil,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		CreatedAt:      time.Time{},
+		UpdatedAt:      time.Time{},
 	}
 
 	if err := u.dao.Register(userData); err != nil {
-		return "", err
+		logger.Error(err)
+		return err
 	}
-	return "Successfully registered", nil
+	return nil
 }

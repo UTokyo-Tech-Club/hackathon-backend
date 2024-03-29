@@ -1,5 +1,7 @@
 package user
 
+import "hackathon-backend/utils/logger"
+
 type Controller struct {
 	usecase Usecase
 }
@@ -10,10 +12,10 @@ func NewController(usecase Usecase) *Controller {
 	}
 }
 
-func (c *Controller) Register(uid string, email string) (string, error) {
-	msg, err := c.usecase.Register(uid, email)
-	if err != nil {
-		return "", err
+func (c *Controller) Register(uid string, email string) error {
+	if err := c.usecase.Register(uid, email); err != nil {
+		logger.Error(err)
+		return err
 	}
-	return msg, nil
+	return nil
 }

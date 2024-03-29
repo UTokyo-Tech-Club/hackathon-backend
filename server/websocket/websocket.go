@@ -4,23 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	firebaseAuth "hackathon-backend/firebase"
+	"hackathon-backend/server/user"
 	"hackathon-backend/utils/logger"
 	"net/http"
 	"sync"
 
+	"firebase.google.com/go/auth"
 	"github.com/gorilla/websocket"
 )
 
 type ClientObject struct {
-	Email           string `json:"email,omitempty"`
-	Username        string `json:"userName,omitempty"`
-	AuthToken       string `json:"authToken,omitempty"`
+	UID             string `json:"uid"`
 	ClientWebSocket *websocket.Conn
 }
 
 type WebSocketServer struct {
 	Clients          map[*ClientObject]bool
-	ClientTokenMap   map[string]*ClientObject
+	ClientUIDMap     map[string]*ClientObject
 	registerClient   chan *ClientObject
 	unregisterClient chan *ClientObject
 
@@ -37,7 +37,7 @@ func Init() *WebSocketServer {
 
 	return &WebSocketServer{
 		Clients:          make(map[*ClientObject]bool),
-		ClientTokenMap:   make(map[string]*ClientObject),
+		ClientUIDMap:     make(map[string]*ClientObject),
 		registerClient:   make(chan *ClientObject),
 		unregisterClient: make(chan *ClientObject),
 
@@ -47,7 +47,23 @@ func Init() *WebSocketServer {
 	}
 }
 
-func (wss *WebSocketServer) SetupRoutes() {
+func NewMessageHandler(msgType string, action string, args ...interface{}) error {
+	userDao := user.NewDao()
+	userUsecase := user.NewUsecase(userDao)
+	userController := user.NewController(userUsecase)
+
+	switch msgType {
+	case "user":
+		switch action {
+		case "register":
+			return userController.Register(args[0].(string), args[1].(string))
+		}
+	}
+
+	return fmt.Errorf("invalid message type or action")
+}
+
+func (wss *WebSocketServer) SetupRouter() {
 	http.HandleFunc("/", wss.handleHomePage)
 	http.HandleFunc("/ws", wss.handleEndPoint)
 }
@@ -61,13 +77,16 @@ func (wss *WebSocketServer) SetupEventListeners() {
 			case client := <-wss.registerClient:
 				wss.lock.Lock()
 				wss.Clients[client] = true
-				wss.ClientTokenMap[client.AuthToken] = client
+				wss.ClientUIDMap[client.UID] = client
 				wss.lock.Unlock()
 			case client := <-wss.unregisterClient:
 				wss.lock.Lock()
 				if _, ok := wss.Clients[client]; ok {
 					delete(wss.Clients, client)
-					client.ClientWebSocket.Close()
+					delete(wss.ClientUIDMap, client.UID)
+					if client.ClientWebSocket != nil {
+						client.ClientWebSocket.Close()
+					}
 				}
 				wss.lock.Unlock()
 			}
@@ -105,49 +124,63 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 
 	// Setup firebase auth
 	fb := firebaseAuth.Init()
-	isAuth := false
+	var idToken *auth.Token
 
 	// Setup client
 	client := &ClientObject{}
-	defer client.ClientWebSocket.Close()
+	defer func() {
+		wss.unregisterClient <- client
+	}()
+
+	// Setup handler
+	userController := user.NewController(user.NewUsecase(user.NewDao()))
 
 	for {
 		// Read message
 		_, p, err := ws.ReadMessage()
 		if err != nil {
 			logger.Error(err)
-			break
+			return
 		}
 
 		// Parse message
 		var msg *Message
 		if err := json.Unmarshal(p, &msg); err != nil {
 			logger.Error(err)
-			break
+			continue
 		}
 		data := []byte(msg.Data)
 
 		// Guard until authentication
-		if !isAuth {
+		if idToken == nil {
 
-			if msg.Type != "auth" {
+			if msg.Type != "user" || msg.Action != "auth" {
 				logger.Error("Must authenticate first")
-				break
+				continue
 			}
 
-			idToken, err := firebaseAuth.ValidateToken(fb, data)
+			idToken, err = firebaseAuth.ValidateToken(fb, data)
 			if err != nil {
 				logger.Error("Error verifying token:", err)
-				return
+				continue
 			}
 
-			isAuth = true
-			client.Username = idToken.UID
-			wss.registerClient <- client
+			uid := idToken.UID
 
-			logger.Info("Authenticated user: ", idToken.UID)
+			wss.registerClient <- client
+			logger.Info("Authenticated user: ", uid)
 		}
 
-	}
+		// Process messages
+		switch msg.Type {
+		case "user":
+			switch msg.Action {
+			case "auth":
+				userController.Register(idToken.UID, idToken.Claims["email"].(string))
 
+			}
+		}
+
+		// user.CreateTable()
+	}
 }
