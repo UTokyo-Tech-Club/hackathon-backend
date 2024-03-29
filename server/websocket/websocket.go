@@ -93,30 +93,35 @@ func (wss *WebSocketServer) handleHomePage(w http.ResponseWriter, r *http.Reques
 func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Request) {
 	logger.Info("WebSocket Endpoint Hit")
 
+	// Allow all origins
 	wss.getUpgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
+	// Upgrade connection
 	ws, err := wss.getUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
 
+	// Setup firebase auth
 	fb := firebaseAuth.Init()
 	isAuth := false
 
+	// Setup client
 	client := &ClientObject{}
 	defer client.ClientWebSocket.Close()
 
 	for {
+		// Read message
 		_, p, err := ws.ReadMessage()
 		if err != nil {
 			logger.Error(err)
 			break
 		}
 
+		// Parse message
 		var msg *Message
-		err = json.Unmarshal(p, &msg)
-		if err != nil {
+		if err := json.Unmarshal(p, &msg); err != nil {
 			logger.Error(err)
 			break
 		}

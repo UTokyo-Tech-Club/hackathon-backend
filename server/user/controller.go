@@ -1,13 +1,19 @@
 package user
 
-import (
-	firebase "firebase.google.com/go"
-)
-
-type UserController struct {
-	userUsecase UserUsecase
+type Controller struct {
+	usecase Usecase
 }
 
-func (ui *UserController) AuthUser(fb *firebase.App, data string) {
+func NewController(usecase Usecase) *Controller {
+	return &Controller{
+		usecase: usecase,
+	}
+}
 
+func (c *Controller) Register(uid string, email string) (string, error) {
+	msg, err := c.usecase.Register(uid, email)
+	if err != nil {
+		return "", err
+	}
+	return msg, nil
 }
