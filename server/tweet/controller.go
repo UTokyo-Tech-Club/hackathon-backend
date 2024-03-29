@@ -1,7 +1,6 @@
 package tweet
 
 import (
-	"encoding/json"
 	"hackathon-backend/utils/logger"
 )
 
@@ -16,12 +15,8 @@ func NewController(usecase Usecase) *Controller {
 }
 
 func (c *Controller) Post(userUID string, data []byte) error {
-	var tweetData *TweetData
-	if err := json.Unmarshal(data, &tweetData); err != nil {
-		return err
-	}
-
 	if err := c.usecase.Post(userUID, data); err != nil {
+		logger.Error(err)
 		return err
 	}
 
