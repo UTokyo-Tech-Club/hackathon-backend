@@ -1,6 +1,13 @@
 package user
 
-type UserInterface interface {
-	RegisterUser(p)
-	AuthUser
+import (
+	firebase "firebase.google.com/go"
+)
+
+type UserController struct {
+	userUsecase UserUsecase
+}
+
+func (ui *UserController) AuthUser(fb *firebase.App, data string) {
+
 }

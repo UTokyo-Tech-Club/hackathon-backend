@@ -120,6 +120,8 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 			logger.Error(err)
 			break
 		}
+		data := []byte(msg.Data)
+
 		// Guard until authentication
 		if !isAuth {
 
@@ -128,7 +130,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 				break
 			}
 
-			idToken, err := firebaseAuth.ValidateToken(fb, msg.Data)
+			idToken, err := firebaseAuth.ValidateToken(fb, data)
 			if err != nil {
 				logger.Error("Error verifying token:", err)
 				return
