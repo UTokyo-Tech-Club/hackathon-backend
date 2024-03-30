@@ -24,10 +24,14 @@ func init() {
 
 func main() {
 	port := os.Getenv("PORT")
-	isPortEmpty := port == ""
+	// isPortEmpty := port == ""
 
-	if isPortEmpty {
-		logger.Fatal("PORT is empty")
+	// if isPortEmpty {
+	// 	logger.Fatal("PORT is empty")
+	// }
+
+	if port == "" {
+		port = "8080"
 	}
 
 	wss := websocket.Init()
