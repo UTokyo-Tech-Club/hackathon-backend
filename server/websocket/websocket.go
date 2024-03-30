@@ -76,7 +76,6 @@ func (wss *WebSocketServer) SetupEventListeners() {
 			}
 		}
 	}()
-
 }
 
 func (wss *WebSocketServer) handleHomePage(w http.ResponseWriter, r *http.Request) {
