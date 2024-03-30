@@ -4,11 +4,12 @@ import (
 	"hackathon-backend/utils/logger"
 	"time"
 
+	"firebase.google.com/go/auth"
 	"github.com/google/uuid"
 )
 
 type Usecase interface {
-	Post(userUID string, data []byte) error
+	Post(token *auth.Token, data []byte) error
 }
 
 type usecase struct {
@@ -21,11 +22,11 @@ func NewUsecase(dao Dao) Usecase {
 	}
 }
 
-func (u *usecase) Post(userUID string, data []byte) error {
+func (u *usecase) Post(token *auth.Token, data []byte) error {
 
 	tweetData := TweetData{
 		TweetUID:  uuid.New().String(),
-		UserUID:   userUID,
+		UserUID:   token.UID,
 		Content:   data,
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},

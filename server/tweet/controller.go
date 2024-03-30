@@ -2,6 +2,8 @@ package tweet
 
 import (
 	"hackathon-backend/utils/logger"
+
+	"firebase.google.com/go/auth"
 )
 
 type Controller struct {
@@ -14,12 +16,12 @@ func NewController(usecase Usecase) *Controller {
 	}
 }
 
-func (c *Controller) Post(userUID string, data []byte) error {
-	if err := c.usecase.Post(userUID, data); err != nil {
+func (c *Controller) Post(token *auth.Token, data []byte) error {
+	if err := c.usecase.Post(token, data); err != nil {
 		logger.Error(err)
 		return err
 	}
 
-	logger.Info("Posted tweet: ", userUID)
+	logger.Info("Posted tweet: ", token.UID)
 	return nil
 }

@@ -10,17 +10,21 @@ type Controllers struct {
 	Tweet *tweet.Controller
 }
 
-func NewControllers() *Controllers {
+func NewControllers() map[string]interface{} {
 	userDao := user.NewDao()
 	userUsecase := user.NewUsecase(userDao)
-	userController := user.NewController(userUsecase)
+	userCtl := user.NewController(userUsecase)
 
 	tweetDao := tweet.NewDao()
 	tweetUsecase := tweet.NewUsecase(tweetDao)
-	tweetController := tweet.NewController(tweetUsecase)
+	tweetCtl := tweet.NewController(tweetUsecase)
 
-	return &Controllers{
-		User:  userController,
-		Tweet: tweetController,
+	return map[string]interface{}{
+		"user": map[string]interface{}{
+			"auth": userCtl.Register,
+		},
+		"tweet": map[string]interface{}{
+			"post": tweetCtl.Post,
+		},
 	}
 }

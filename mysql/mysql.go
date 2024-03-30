@@ -35,6 +35,7 @@ func Exec(query string, args ...interface{}) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer tx.Rollback()
 
 	// Prepare a statement within the transaction
 	stmt, err := tx.Prepare(query)
@@ -46,13 +47,12 @@ func Exec(query string, args ...interface{}) (sql.Result, error) {
 	// Execute the statement
 	result, err := stmt.Exec(args...)
 	if err != nil {
-		tx.Rollback()
+
 		return nil, err
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
@@ -65,15 +65,14 @@ func CreateTable(query string) (sql.Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer tx.Rollback()
 
 	result, err := tx.Exec(query)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 

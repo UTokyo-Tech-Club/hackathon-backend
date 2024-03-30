@@ -13,8 +13,3 @@ type UserData struct {
 	CreatedAt      time.Time       `json:"createdAt"`
 	UpdatedAt      time.Time       `json:"updatedAt"`
 }
-
-type FirebaseUserData struct {
-	UID   string `json:"uid"`
-	Email string `json:"email"`
-}

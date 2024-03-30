@@ -1,6 +1,10 @@
 package user
 
-import "hackathon-backend/utils/logger"
+import (
+	"hackathon-backend/utils/logger"
+
+	"firebase.google.com/go/auth"
+)
 
 type Controller struct {
 	usecase Usecase
@@ -12,12 +16,12 @@ func NewController(usecase Usecase) *Controller {
 	}
 }
 
-func (c *Controller) Register(uid string, email string) error {
-	if err := c.usecase.Register(uid, email); err != nil {
+func (c *Controller) Register(token *auth.Token, data []byte) error {
+	if err := c.usecase.Register(token, data); err != nil {
 		logger.Error(err)
 		return err
 	}
 
-	logger.Info("Registered user: ", uid)
+	logger.Info("Registered user: ", token.UID)
 	return nil
 }

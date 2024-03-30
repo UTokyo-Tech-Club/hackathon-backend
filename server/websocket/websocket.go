@@ -5,7 +5,6 @@ import (
 	"fmt"
 	firebaseAuth "hackathon-backend/firebase"
 	"hackathon-backend/server"
-	"hackathon-backend/server/user"
 	"hackathon-backend/utils/logger"
 	"net/http"
 	"sync"
@@ -46,22 +45,6 @@ func Init() *WebSocketServer {
 
 		lock: sync.Mutex{},
 	}
-}
-
-func NewMessageHandler(msgType string, action string, args ...interface{}) error {
-	userDao := user.NewDao()
-	userUsecase := user.NewUsecase(userDao)
-	userController := user.NewController(userUsecase)
-
-	switch msgType {
-	case "user":
-		switch action {
-		case "register":
-			return userController.Register(args[0].(string), args[1].(string))
-		}
-	}
-
-	return fmt.Errorf("invalid message type or action")
 }
 
 func (wss *WebSocketServer) SetupRouter() {
@@ -123,10 +106,8 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		wss.unregisterClient <- client
 	}()
 
-	// Setup database
-
-	// Setup ctl
-	ctl := server.NewControllers()
+	// Setup controllers
+	controllers := server.NewControllers()
 
 	for {
 		// Read message
@@ -154,7 +135,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 
 			idToken, err = firebaseAuth.ValidateToken(fb, data)
 			if err != nil {
-				logger.Error("Error verifying token:", err)
+				logger.Error("Error verifying token: ", err)
 				continue
 			}
 
@@ -162,19 +143,10 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		}
 
 		// Process messages
-		switch msg.Type {
-		case "user":
-			switch msg.Action {
-			case "auth":
-				ctl.User.Register(idToken.UID, idToken.Claims["email"].(string))
-			}
-		case "tweet":
-			switch msg.Action {
-			case "post":
-				ctl.Tweet.Post(idToken.UID, data)
+		if msgType, exists := controllers[msg.Type]; exists {
+			if action, exists := msgType.(map[string]interface{})[msg.Action]; exists {
+				action.(func(*auth.Token, []byte))(idToken, data)
 			}
 		}
-
-		// user.CreateTable()
 	}
 }
