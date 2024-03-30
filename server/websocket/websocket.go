@@ -145,8 +145,11 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		// Process messages
 		if msgType, exists := controllers[msg.Type]; exists {
 			if action, exists := msgType.(map[string]interface{})[msg.Action]; exists {
-				action.(func(*auth.Token, []byte))(idToken, data)
+				logger.Info("Processing message: ", idToken.UID, " ", msg.Type, " ", msg.Action)
+				action.(func(*websocket.Conn, *auth.Token, []byte) error)(ws, idToken, data)
+				continue
 			}
 		}
+		logger.Error("Invalid message type or action")
 	}
 }
