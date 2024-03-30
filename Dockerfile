@@ -1,7 +1,7 @@
 # FROM golang:1.22-alpine AS builder
 FROM golang:1.22-alpine
 
-# RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN go build -o myserver
 
 # FROM scratch
 
-RUN apk --no-cache add ca-certificates
+# RUN apk --no-cache add ca-certificates
 
 # COPY --from=builder /app/myserver /myserver
 
