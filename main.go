@@ -36,7 +36,7 @@ func main() {
 
 	// Warning:
 	// This line must be executed to start the server on GCP
-	// Avoid calling fatal logger before this line
+	// Avoid calling fatal logger before this line if it is not critical
 	// If MySQL connection fails, the build will fail during deployment
 	//
 	// Note:
