@@ -16,7 +16,7 @@ func CreateTable() {
 		update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`
 
 	if _, err := mysql.CreateTable(query); err != nil {
-		logger.Fatal(err)
+		logger.Error(err)
 		return
 	}
 }

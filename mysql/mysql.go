@@ -14,14 +14,14 @@ func Init() {
 	err := error(nil)
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
-		logger.Fatal(err)
+		logger.Error(err)
 		return
 	}
 
 	// Check if the connection is successful
 	err = db.Ping()
 	if err != nil {
-		logger.Fatal(err)
+		logger.Error(err)
 		return
 	}
 

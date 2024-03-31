@@ -24,13 +24,9 @@ func init() {
 
 func main() {
 	port := os.Getenv("PORT")
-	// isPortEmpty := port == ""
-
-	// if isPortEmpty {
-	// 	logger.Fatal("PORT is empty")
-	// }
 
 	if port == "" {
+		logger.Warning("PORT is empty")
 		port = "8080"
 	}
 

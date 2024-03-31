@@ -13,7 +13,7 @@ var redisClient *redis.Client
 func Init() {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	if redisAddr == "" {
-		logger.Fatal("REDIS_ADDR environment variable not set")
+		logger.Error("REDIS_ADDR environment variable not set")
 	}
 
 	redisClient = redis.NewClient(&redis.Options{
@@ -22,7 +22,7 @@ func Init() {
 
 	err := redisClient.Ping(context.Background()).Err()
 	if err != nil {
-		logger.Fatal("Error connecting to redis: ", err)
+		logger.Error("Error connecting to redis: ", err)
 	}
 
 	logger.Info("Connected to redis")
