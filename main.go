@@ -2,7 +2,6 @@ package main
 
 import (
 	"hackathon-backend/mysql"
-	"hackathon-backend/server"
 	"hackathon-backend/server/websocket"
 	"hackathon-backend/utils/logger"
 	"net/http"
@@ -19,7 +18,7 @@ func init() {
 	}
 
 	mysql.Init()
-	server.SetupDatabase()
+	// server.SetupDatabase()
 }
 
 func main() {
@@ -34,5 +33,13 @@ func main() {
 	wss.SetupRouter()
 	wss.SetupEventListeners()
 	logger.Info("Server is running on port " + port)
+
+	// Warning:
+	// This line must be executed to start the server on GCP
+	// Avoid calling fatal logger before this line
+	//
+	// Note:
+	// Connection is first established with HTTP,
+	// then upgraded to WebSocket
 	logger.Fatal(http.ListenAndServe(":"+port, nil))
 }
