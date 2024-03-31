@@ -29,12 +29,14 @@ func (c *Controller) Register(ws *websocket.Conn, token *auth.Token, data []byte
 	return nil
 }
 
-// func (c *Controller) Edit(token *auth.Token, data []byte) error {
-// 	if err := c.usecase.Edit(token, data); err != nil {
-// 		logger.Error(err)
-// 		return err
-// 	}
+func (c *Controller) Edit(ws *websocket.Conn, token *auth.Token, data []byte) error {
+	if err := c.usecase.Edit(token, data); err != nil {
+		logger.Error(err)
+		return err
+	}
 
-// 	logger.Info("Edited user: ", token.UID)
-// 	return nil
-// }
+	ws.WriteMessage(websocket.TextMessage, []byte(`{"error": "null"}`))
+
+	logger.Info("Updated user: ", token.UID)
+	return nil
+}

@@ -1,14 +1,15 @@
 package user
 
 import (
+	"encoding/json"
 	"hackathon-backend/utils/logger"
-	"time"
 
 	"firebase.google.com/go/auth"
 )
 
 type Usecase interface {
 	Register(token *auth.Token, data []byte) error
+	Edit(token *auth.Token, data []byte) error
 }
 
 type usecase struct {
@@ -22,13 +23,12 @@ func NewUsecase(dao Dao) Usecase {
 }
 
 func (u *usecase) Register(token *auth.Token, data []byte) error {
+
 	userData := UserData{
-		UID:            token.UID,
-		Username:       token.Claims["name"].(string),
-		Email:          token.Claims["email"].(string),
-		ProfileContent: nil,
-		CreatedAt:      time.Time{},
-		UpdatedAt:      time.Time{},
+		UID:      token.UID,
+		Username: token.Claims["name"].(string),
+		Email:    token.Claims["email"].(string),
+		PhotoURL: token.Claims["picture"].(string),
 	}
 
 	if err := u.dao.Register(userData); err != nil {
@@ -38,19 +38,25 @@ func (u *usecase) Register(token *auth.Token, data []byte) error {
 	return nil
 }
 
-// func (u *usecase) Edit(token *auth.Token, data []byte) error {
-// 	userData := UserData{
-// 		UID:            token.UID,
-// 		Username:       token.Claims["name"].(string),
-// 		Email:          token.Claims["email"].(string),
-// 		ProfileContent: nil,
-// 		CreatedAt:      time.Time{},
-// 		UpdatedAt:      time.Time{},
-// 	}
+func (u *usecase) Edit(token *auth.Token, data []byte) error {
 
-// 	if err := u.dao.Edit(userData); err != nil {
-// 		logger.Error(err)
-// 		return err
-// 	}
-// 	return nil
-// }
+	var newData *UpdateData
+
+	if err := json.Unmarshal(data, &newData); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	userData := UserData{
+		UID:            token.UID,
+		Username:       newData.Username,
+		PhotoURL:       newData.PhotoURL,
+		ProfileContent: newData.ProfileContent,
+	}
+
+	if err := u.dao.Edit(userData); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}

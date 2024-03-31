@@ -10,6 +10,7 @@ func CreateTable() {
 		uid VARCHAR(255) PRIMARY KEY, 
 		username VARCHAR(255), 
 		email VARCHAR(255), 
+		photo_url VARCHAR(255),
 		profile_content TEXT, 
 		create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`
