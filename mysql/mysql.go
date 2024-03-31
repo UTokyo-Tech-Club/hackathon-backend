@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"hackathon-backend/utils/logger"
-	"log"
+	"hackathon-backend/utils/variables"
 	"net"
 	"os"
 
@@ -16,68 +16,13 @@ import (
 
 var db *sql.DB
 
-// func Init() {
-// 	dbUser := os.Getenv("DB_USER")
-// 	dbPwd := os.Getenv("DB_PASS")
-// 	dbName := os.Getenv("DB_NAME")
-// 	instanceConnectionName := os.Getenv("INSTANCE_CONNECTION_NAME")
+func initDBServer() {
 
-// 	dsn := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
-
-// 	// Use cloudsqlconn to dial the Cloud SQL instance
-// 	_, err := cloudsqlconn.NewDialer(context.Background())
-// 	if err != nil {
-// 		logger.Error("Could not create dialer: ", err)
-// 	}
-
-// 	// var opts []cloudsqlconn.DialOption
-
-// 	// sqlcon.RegisterDialContext("cloudsqlconn",
-// 	// 	func(ctx context.Context, addr string) (net.Conn, error) {
-// 	// 		return d.Dial(ctx, instanceConnectionName, opts...)
-// 	// 	})
-
-// 	db, err := sql.Open("mysql", dsn)
-// 	if err != nil {
-// 		logger.Error("Could not open db: ", err)
-// 	}
-
-// 	// dsn := "root:TheoJang(30@tcp(34.146.51.218:3306)/hackathon"
-// 	// err := error(nil)
-// 	// db, err = sql.Open("mysql", dsn)
-// 	// if err != nil {
-// 	// 	logger.Error(err)
-// 	// 	return
-// 	// }
-
-// 	// Check if the connection is successful
-// 	err = db.Ping()
-// 	if err != nil {
-// 		logger.Error(err)
-// 		return
-// 	}
-
-// 	logger.Info("Connected to the MySQL database successfully!")
-// }
-
-func Init() {
-
-	mustGetenv := func(k string) string {
-		v := os.Getenv(k)
-		if v == "" {
-			log.Fatalf("Fatal Error in connect_connector.go: %s environment variable not set.", k)
-		}
-		return v
-	}
-	// Note: Saving credentials in environment variables is convenient, but not
-	// secure - consider a more secure solution such as
-	// Cloud Secret Manager (https://cloud.google.com/secret-manager) to help
-	// keep passwords and other secrets safe.
 	var (
-		dbUser                 = mustGetenv("DB_USER")                  // e.g. 'my-db-user'
-		dbPwd                  = mustGetenv("DB_PASS")                  // e.g. 'my-db-password'
-		dbName                 = mustGetenv("DB_NAME")                  // e.g. 'my-database'
-		instanceConnectionName = mustGetenv("INSTANCE_CONNECTION_NAME") // e.g. 'project:region:instance'
+		dbUser                 = variables.MustGetenv("DB_USER")
+		dbPwd                  = variables.MustGetenv("DB_PASS")
+		dbName                 = variables.MustGetenv("DB_NAME")
+		instanceConnectionName = variables.MustGetenv("INSTANCE_CONNECTION_NAME")
 		usePrivate             = os.Getenv("PRIVATE_IP")
 	)
 
@@ -98,12 +43,52 @@ func Init() {
 	dbURI := fmt.Sprintf("%s:%s@cloudsqlconn(localhost:3306)/%s?parseTime=true",
 		dbUser, dbPwd, dbName)
 
-	dbPool, err := sql.Open("mysql", dbURI)
+	db, err = sql.Open("mysql", dbURI)
 	if err != nil {
 		logger.Error("sql.Open: ", err)
 		return
 	}
-	db = dbPool
+
+	if db.Ping() != nil {
+		logger.Error(err)
+		return
+	}
+
+	logger.Info("MySQL connection successful")
+}
+
+func initDBLocal() {
+
+	var (
+		dbUser                 = variables.MustGetenv("DB_USER")
+		dbPwd                  = variables.MustGetenv("DB_PASS")
+		dbName                 = variables.MustGetenv("DB_NAME")
+		instanceConnectionName = variables.MustGetenv("INSTANCE_CONNECTION_NAME")
+	)
+
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
+	err := error(nil)
+	db, err = sql.Open("mysql", dsn)
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	// Check if the connection is successful
+	if db.Ping() != nil {
+		logger.Error(err)
+		return
+	}
+
+	logger.Info("Connected to the MySQL database successfully!")
+}
+
+func Init() {
+	if os.Getenv("IS_DEPLOYED") == "true" {
+		initDBServer()
+	} else {
+		initDBLocal()
+	}
 }
 
 func Exec(query string, args ...interface{}) (sql.Result, error) {
