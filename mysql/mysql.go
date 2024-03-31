@@ -1,22 +1,51 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
 	"hackathon-backend/utils/logger"
+	"os"
 
+	"cloud.google.com/go/cloudsqlconn"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 var db *sql.DB
 
 func Init() {
-	dsn := "root:TheoJang(30@tcp(34.146.51.218:3306)/hackathon"
-	err := error(nil)
-	db, err = sql.Open("mysql", dsn)
+	dbUser := os.Getenv("DB_USER")
+	dbPwd := os.Getenv("DB_PASS")
+	dbName := os.Getenv("DB_NAME")
+	instanceConnectionName := os.Getenv("INSTANCE_CONNECTION_NAME")
+
+	dsn := fmt.Sprintf("%s:%s@unix(/cloudsql/%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
+
+	// Use cloudsqlconn to dial the Cloud SQL instance
+	_, err := cloudsqlconn.NewDialer(context.Background())
 	if err != nil {
-		logger.Error(err)
-		return
+		logger.Error("Could not create dialer: ", err)
 	}
+
+	// var opts []cloudsqlconn.DialOption
+
+	// sqlcon.RegisterDialContext("cloudsqlconn",
+	// 	func(ctx context.Context, addr string) (net.Conn, error) {
+	// 		return d.Dial(ctx, instanceConnectionName, opts...)
+	// 	})
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		logger.Error("Could not open db: ", err)
+	}
+
+	// dsn := "root:TheoJang(30@tcp(34.146.51.218:3306)/hackathon"
+	// err := error(nil)
+	// db, err = sql.Open("mysql", dsn)
+	// if err != nil {
+	// 	logger.Error(err)
+	// 	return
+	// }
 
 	// Check if the connection is successful
 	err = db.Ping()
