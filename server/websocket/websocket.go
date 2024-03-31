@@ -124,6 +124,12 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		}
 		data := []byte(msg.Data)
 
+		// Pong message
+		if msg.Type == "sys" && msg.Action == "ping" {
+			ws.WriteMessage(websocket.TextMessage, []byte(`{"response": "pong"}`))
+			continue
+		}
+
 		// Guard until authentication
 		if idToken == nil {
 
@@ -149,6 +155,6 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 				continue
 			}
 		}
-		logger.Error("Invalid message type or action")
+		logger.Error("Invalid message type or action: ", msg.Type, " ", msg.Action)
 	}
 }
