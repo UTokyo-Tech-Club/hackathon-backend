@@ -10,6 +10,7 @@ import (
 type Usecase interface {
 	Register(token *auth.Token, data []byte) error
 	Edit(token *auth.Token, data []byte) error
+	GetProfileContent(token *auth.Token, data []byte) ([]byte, error)
 }
 
 type usecase struct {
@@ -22,7 +23,7 @@ func NewUsecase(dao Dao) Usecase {
 	}
 }
 
-func (u *usecase) Register(token *auth.Token, data []byte) error {
+func (u *usecase) Register(token *auth.Token, _ []byte) error {
 
 	userData := UserData{
 		UID:      token.UID,
@@ -40,8 +41,7 @@ func (u *usecase) Register(token *auth.Token, data []byte) error {
 
 func (u *usecase) Edit(token *auth.Token, data []byte) error {
 
-	var newData *UpdateData
-
+	var newData *UserData
 	if err := json.Unmarshal(data, &newData); err != nil {
 		logger.Error(err)
 		return err
@@ -59,4 +59,19 @@ func (u *usecase) Edit(token *auth.Token, data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (u *usecase) GetProfileContent(token *auth.Token, _ []byte) ([]byte, error) {
+
+	data := UserData{
+		UID: token.UID,
+	}
+
+	userData, err := u.dao.GetProfileContent(data)
+	if err != nil {
+		logger.Error(err)
+		return nil, err
+	}
+
+	return userData.ProfileContent, nil
 }

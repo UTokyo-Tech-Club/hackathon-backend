@@ -8,6 +8,7 @@ import (
 type Dao interface {
 	Register(d UserData) error
 	Edit(d UserData) error
+	GetProfileContent(d UserData) (UserData, error)
 }
 
 type dao struct{}
@@ -34,4 +35,24 @@ func (dao *dao) Edit(d UserData) error {
 		return err
 	}
 	return nil
+}
+
+func (dao *dao) GetProfileContent(d UserData) (UserData, error) {
+	query := "SELECT profile_content FROM user WHERE uid = ?"
+	stmt, err := mysql.DB.Prepare(query)
+	if err != nil {
+		logger.Error(err)
+		return UserData{}, err
+	}
+	defer stmt.Close()
+
+	var profileContent []byte
+	err = stmt.QueryRow(d.UID).Scan(&profileContent)
+	if err != nil {
+		logger.Error(err)
+		return UserData{}, err
+	}
+
+	d.ProfileContent = profileContent
+	return d, nil
 }

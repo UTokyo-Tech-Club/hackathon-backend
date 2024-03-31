@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Used to interact between usecase and dao
 type UserData struct {
 	UID            string          `json:"uid"`
 	Username       string          `json:"username,omitempty"`
@@ -13,10 +14,4 @@ type UserData struct {
 	PhotoURL       string          `json:"photoURL,omitempty"`
 	CreatedAt      time.Time       `json:"createdAt,omitempty"`
 	UpdatedAt      time.Time       `json:"updatedAt,omitempty"`
-}
-
-type UpdateData struct {
-	Username       string          `json:"username"`
-	PhotoURL       string          `json:"photoURL"`
-	ProfileContent json.RawMessage `json:"bio"`
 }

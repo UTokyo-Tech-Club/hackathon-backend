@@ -14,7 +14,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-var db *sql.DB
+var DB *sql.DB
 
 func initDBServer() {
 
@@ -43,13 +43,13 @@ func initDBServer() {
 	dbURI := fmt.Sprintf("%s:%s@cloudsqlconn(localhost:3306)/%s?parseTime=true",
 		dbUser, dbPwd, dbName)
 
-	db, err = sql.Open("mysql", dbURI)
+	DB, err = sql.Open("mysql", dbURI)
 	if err != nil {
 		logger.Error("sql.Open: ", err)
 		return
 	}
 
-	if db.Ping() != nil {
+	if DB.Ping() != nil {
 		logger.Error(err)
 		return
 	}
@@ -68,14 +68,14 @@ func initDBLocal() {
 
 	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
 	err := error(nil)
-	db, err = sql.Open("mysql", dsn)
+	DB, err = sql.Open("mysql", dsn)
 	if err != nil {
 		logger.Error(err)
 		return
 	}
 
 	// Check if the connection is successful
-	if db.Ping() != nil {
+	if DB.Ping() != nil {
 		logger.Error(err)
 		return
 	}
@@ -94,7 +94,7 @@ func Init() {
 func Exec(query string, args ...interface{}) (sql.Result, error) {
 
 	// Begin a transaction
-	tx, err := db.Begin()
+	tx, err := DB.Begin()
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,6 @@ func Exec(query string, args ...interface{}) (sql.Result, error) {
 	// Execute the statement
 	result, err := stmt.Exec(args...)
 	if err != nil {
-
 		return nil, err
 	}
 
@@ -124,7 +123,7 @@ func Exec(query string, args ...interface{}) (sql.Result, error) {
 
 func CreateTable(query string) (sql.Result, error) {
 
-	tx, err := db.Begin()
+	tx, err := DB.Begin()
 	if err != nil {
 		return nil, err
 	}

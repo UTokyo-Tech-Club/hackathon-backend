@@ -21,8 +21,9 @@ func NewControllers() map[string]interface{} {
 
 	return map[string]interface{}{
 		"user": map[string]interface{}{
-			"auth": userCtl.Register,
-			"edit": userCtl.Edit,
+			"auth":                userCtl.Register,
+			"edit":                userCtl.Edit,
+			"get_profile_content": userCtl.GetProfileContent,
 		},
 		"tweet": map[string]interface{}{
 			"post": tweetCtl.Post,
