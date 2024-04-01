@@ -4,91 +4,86 @@ import (
 	"fmt"
 	firebaseAuth "hackathon-backend/firebase"
 	"hackathon-backend/server"
+	"sync"
+
 	"hackathon-backend/utils/logger"
 	"net/http"
-	"sync"
+
+	wss "hackathon-backend/server/websocketServer"
 
 	"firebase.google.com/go/auth"
 	"github.com/gorilla/websocket"
 )
 
-type ClientObject struct {
-	UID             string `json:"uid"`
-	ClientWebSocket *websocket.Conn
-}
+var ws *wss.WSS
 
-type WebSocketServer struct {
-	Clients          map[*ClientObject]bool
-	ClientUIDMap     map[string]*ClientObject
-	registerClient   chan *ClientObject
-	unregisterClient chan *ClientObject
-
-	getUpgrader websocket.Upgrader
-
-	lock sync.Mutex
-}
-
-func Init() *WebSocketServer {
+func Init() {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
 
-	return &WebSocketServer{
-		Clients:          make(map[*ClientObject]bool),
-		ClientUIDMap:     make(map[string]*ClientObject),
-		registerClient:   make(chan *ClientObject),
-		unregisterClient: make(chan *ClientObject),
+	ws = &wss.WSS{
+		Clients:          make(map[*wss.Client]bool),
+		ClientUIDMap:     make(map[string]*wss.Client),
+		RegisterClient:   make(chan *wss.Client),
+		UnregisterClient: make(chan *wss.Client),
 
-		getUpgrader: upgrader,
+		GetUpgrader: upgrader,
 
-		lock: sync.Mutex{},
+		Lock: sync.Mutex{},
 	}
+
+	setupRouter()
+	setupEventListeners()
 }
 
-func (wss *WebSocketServer) SetupRouter() {
-	http.HandleFunc("/", wss.handleHomePage)
-	http.HandleFunc("/ws", wss.handleEndPoint)
+func setupRouter() {
+	http.HandleFunc("/", handleHomePage)
+	http.HandleFunc("/ws", handleEndPoint)
 }
 
-func (wss *WebSocketServer) SetupEventListeners() {
+func setupEventListeners() {
 
 	// Client Registration
 	go func() {
 		for {
 			select {
-			case client := <-wss.registerClient:
-				wss.lock.Lock()
-				wss.Clients[client] = true
-				wss.ClientUIDMap[client.UID] = client
-				wss.lock.Unlock()
-			case client := <-wss.unregisterClient:
-				wss.lock.Lock()
-				if _, ok := wss.Clients[client]; ok {
-					delete(wss.Clients, client)
-					delete(wss.ClientUIDMap, client.UID)
-					if client.ClientWebSocket != nil {
-						client.ClientWebSocket.Close()
+			case client := <-ws.RegisterClient:
+				ws.Lock.Lock()
+				ws.Clients[client] = true
+				ws.ClientUIDMap[client.UID] = client
+				ws.Lock.Unlock()
+			case client := <-ws.UnregisterClient:
+				ws.Lock.Lock()
+				if _, ok := ws.Clients[client]; ok {
+					delete(ws.Clients, client)
+					delete(ws.ClientUIDMap, client.UID)
+					if client.Conn != nil {
+						client.Conn.Close()
 					}
 				}
-				wss.lock.Unlock()
+				ws.Lock.Unlock()
 			}
 		}
 	}()
 }
 
-func (wss *WebSocketServer) handleHomePage(w http.ResponseWriter, r *http.Request) {
+func handleHomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Home Page")
 }
 
-func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Request) {
+// First establish HTTP connection, then upgrade to WebSocket
+// Communication through WebSocket tunnel is handled with *websocket.Conn for funtionalities allowing anonymous access
+// Functionalities requiring authentication are handled with *wss.WSS that enables broadcasting
+func handleEndPoint(w http.ResponseWriter, r *http.Request) {
 	logger.Info("WebSocket Endpoint Hit")
 
 	// Allow all origins
-	wss.getUpgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	ws.GetUpgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	// Upgrade connection to websocket
-	ws, err := wss.getUpgrader.Upgrade(w, r, nil)
+	socket, err := ws.GetUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error(err)
 		return
@@ -98,20 +93,13 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 	fb := firebaseAuth.Init()
 	var idToken *auth.Token
 
-	// Setup client
-	client := &ClientObject{}
-	defer func() {
-		logger.Warning("Client disconnected: ", client.UID)
-		wss.unregisterClient <- client
-	}()
-
-	// Setup controllersAuth
+	// Setup controllers
 	controllers, controllersAuth := server.NewControllers()
 
 	for {
 		// Read message
 		var msg Message
-		if err := ws.ReadJSON(&msg); err != nil {
+		if err := socket.ReadJSON(&msg); err != nil {
 			logger.Error(err)
 			break
 		}
@@ -123,7 +111,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 				if msg.Action != "ping" {
 					logger.Info("Processing message without auth: ", msg.Type, " ", msg.Action)
 				}
-				action.(func(*websocket.Conn, map[string]interface{}) error)(ws, data)
+				action.(func(*websocket.Conn, map[string]interface{}) error)(socket, data)
 				continue
 			}
 		}
@@ -141,19 +129,32 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 				continue
 			}
 
-			ws.WriteJSON(map[string]string{"error": "null"})
+			socket.WriteJSON(map[string]string{"error": "null"})
 			logger.Info("Authenticated: ", idToken.UID)
 
-			// Register user in server
+			// Add client to WebSocket server
+			client := &wss.Client{}
+			defer func() {
+				logger.Warning("Client disconnected: ", client.UID)
+				ws.UnregisterClient <- client
+			}()
 			client.UID = idToken.UID
-			wss.registerClient <- client
+			client.Conn = socket
+			ws.RegisterClient <- client
+		}
+
+		// Wait until client is registered to WebSocket server
+		for {
+			if _, ok := ws.ClientUIDMap[idToken.UID]; ok {
+				break
+			}
 		}
 
 		// Process messages with authentication
 		if msgType, exists := controllersAuth[msg.Type]; exists {
 			if action, exists := msgType.(map[string]interface{})[msg.Action]; exists {
 				logger.Info("Processing message with auth: ", idToken.UID, " ", msg.Type, " ", msg.Action)
-				action.(func(*websocket.Conn, *auth.Token, map[string]interface{}) error)(ws, idToken, data)
+				action.(func(*wss.WSS, *auth.Token, map[string]interface{}) error)(ws, idToken, data)
 				continue
 			}
 		}

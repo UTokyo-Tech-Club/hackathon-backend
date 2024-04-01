@@ -9,7 +9,8 @@ import (
 
 func NewControllers() (map[string]interface{}, map[string]interface{}) {
 	userDao := user.NewDao()
-	userUsecase := user.NewUsecase(userDao)
+	userBroadcaster := user.NewBroadcaster()
+	userUsecase := user.NewUsecase(userBroadcaster, userDao)
 	userCtl := user.NewController(userUsecase)
 
 	tweetDao := tweet.NewDao()

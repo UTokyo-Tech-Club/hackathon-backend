@@ -14,12 +14,14 @@ type Usecase interface {
 }
 
 type usecase struct {
-	dao Dao
+	broadcaster Broadcaster
+	dao         Dao
 }
 
-func NewUsecase(dao Dao) Usecase {
+func NewUsecase(broadcaster Broadcaster, dao Dao) Usecase {
 	return &usecase{
-		dao: dao,
+		broadcaster: broadcaster,
+		dao:         dao,
 	}
 }
 

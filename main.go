@@ -33,9 +33,7 @@ func main() {
 		port = "8080"
 	}
 
-	wss := websocket.Init()
-	wss.SetupRouter()
-	wss.SetupEventListeners()
+	websocket.Init()
 
 	// Warning:
 	// This line must be executed to start the server on GCP
