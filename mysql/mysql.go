@@ -80,7 +80,7 @@ func initDBLocal() {
 		return
 	}
 
-	logger.Info("Connected to the MySQL database successfully!")
+	logger.Info("Connected to MySQL")
 }
 
 func Init() {

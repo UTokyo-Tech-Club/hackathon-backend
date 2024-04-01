@@ -24,28 +24,26 @@ func NewController(usecase Usecase) *Controller {
 func (c *Controller) Register(ws *websocket.Conn, token *auth.Token, _ map[string]interface{}) error {
 	if err := c.usecase.Register(token); err != nil {
 		logger.Error(err)
-		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		ws.WriteJSON(map[string]interface{}{"error": err.Error()})
 		return err
 	}
 
-	msg := `{"error": "null"}`
-	ws.WriteMessage(websocket.TextMessage, []byte(msg))
+	ws.WriteJSON(map[string]interface{}{"error": "null"})
 
-	logger.Info("Registered user: ", token.UID, msg)
+	logger.Info("Registered user: ", token.UID)
 	return nil
 }
 
 func (c *Controller) Edit(ws *websocket.Conn, token *auth.Token, data map[string]interface{}) error {
 	if err := c.usecase.Edit(token, data); err != nil {
 		logger.Error(err)
-		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		ws.WriteJSON(map[string]interface{}{"error": err.Error()})
 		return err
 	}
 
-	msg := `{"error": "null"}`
-	ws.WriteMessage(websocket.TextMessage, []byte(msg))
+	ws.WriteJSON(map[string]interface{}{"error": "null"})
 
-	logger.Info("Updated user: ", token.UID, msg)
+	logger.Info("Updated user: ", token.UID)
 	return nil
 }
 
@@ -60,5 +58,18 @@ func (c *Controller) GetProfileContent(ws *websocket.Conn, token *auth.Token, da
 	ws.WriteJSON(map[string]interface{}{"data": content, "error": "null"})
 
 	logger.Info("Sent profile content: ", token.UID, fmt.Sprintf("%s", content))
+	return nil
+}
+
+func (c *Controller) Follow(ws *websocket.Conn, token *auth.Token, data map[string]interface{}) error {
+	if err := c.usecase.Follow(token, data); err != nil {
+		logger.Error(err)
+		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+		return err
+	}
+
+	ws.WriteJSON(map[string]interface{}{"error": "null"})
+
+	logger.Info("Followed user: ", token.UID)
 	return nil
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"hackathon-backend/mysql"
+	"hackathon-backend/neo4j"
 	"hackathon-backend/server"
 	"hackathon-backend/server/websocket"
 	"hackathon-backend/utils/logger"
@@ -20,6 +21,8 @@ func init() {
 
 	mysql.Init()
 	server.SetupDatabase()
+
+	neo4j.Init()
 }
 
 func main() {

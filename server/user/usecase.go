@@ -10,6 +10,7 @@ type Usecase interface {
 	Register(token *auth.Token) error
 	Edit(token *auth.Token, data map[string]interface{}) error
 	GetProfileContent(token *auth.Token, data map[string]interface{}) (map[string]interface{}, error)
+	Follow(token *auth.Token, data map[string]interface{}) error
 }
 
 type usecase struct {
@@ -60,11 +61,21 @@ func (u *usecase) GetProfileContent(token *auth.Token, _ map[string]interface{})
 		UID: token.UID,
 	}
 
-	userData, err := u.dao.GetProfileContent(data)
+	userData, err := u.dao.GetProfileContent(&data)
 	if err != nil {
 		logger.Error(err)
 		return nil, err
 	}
 
 	return map[string]interface{}{"content": userData.ProfileContent}, nil
+}
+
+func (u *usecase) Follow(token *auth.Token, data map[string]interface{}) error {
+
+	if err := u.dao.Follow(token.UID, data["userToFollowUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
 }

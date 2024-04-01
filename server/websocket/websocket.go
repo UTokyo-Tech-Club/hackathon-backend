@@ -101,6 +101,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 	// Setup client
 	client := &ClientObject{}
 	defer func() {
+		logger.Warning("Client disconnected: ", client.UID)
 		wss.unregisterClient <- client
 	}()
 
@@ -112,7 +113,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		var msg Message
 		if err := ws.ReadJSON(&msg); err != nil {
 			logger.Error(err)
-			continue
+			break
 		}
 		data := msg.Data
 
@@ -144,6 +145,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 			logger.Info("Authenticated: ", idToken.UID)
 
 			// Register user in server
+			client.UID = idToken.UID
 			wss.registerClient <- client
 		}
 

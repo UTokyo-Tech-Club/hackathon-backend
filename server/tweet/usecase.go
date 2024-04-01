@@ -10,7 +10,7 @@ import (
 
 type Usecase interface {
 	Post(token *auth.Token, data map[string]interface{}) error
-	GetNewest(data map[string]interface{}) (TweetData, error)
+	GetNewest(data map[string]interface{}) (*TweetData, error)
 }
 
 type usecase struct {
@@ -40,13 +40,14 @@ func (u *usecase) Post(token *auth.Token, data map[string]interface{}) error {
 	return nil
 }
 
-func (u *usecase) GetNewest(data map[string]interface{}) (TweetData, error) {
+func (u *usecase) GetNewest(data map[string]interface{}) (*TweetData, error) {
 	index := int(data["index"].(float64))
 
-	tweet, err := u.dao.GetNewest(index)
+	newTweet := TweetData{}
+	tweet, err := u.dao.GetNewest(&newTweet, index)
 	if err != nil {
 		logger.Error(err)
-		return TweetData{}, err
+		return &newTweet, err
 	}
 	return tweet, nil
 }
