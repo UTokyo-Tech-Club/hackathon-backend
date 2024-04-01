@@ -9,7 +9,8 @@ import (
 )
 
 type Usecase interface {
-	Post(token *auth.Token, data []byte) error
+	Post(token *auth.Token, data map[string]interface{}) error
+	GetNewest(data map[string]interface{}) (TweetData, error)
 }
 
 type usecase struct {
@@ -22,12 +23,12 @@ func NewUsecase(dao Dao) Usecase {
 	}
 }
 
-func (u *usecase) Post(token *auth.Token, data []byte) error {
+func (u *usecase) Post(token *auth.Token, data map[string]interface{}) error {
 
 	tweetData := TweetData{
-		TweetUID:  uuid.New().String(),
-		UserUID:   token.UID,
-		Content:   data,
+		UID:       uuid.New().String(),
+		OwnerUID:  token.UID,
+		Content:   []byte(data["content"].(string)),
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},
 	}
@@ -37,4 +38,15 @@ func (u *usecase) Post(token *auth.Token, data []byte) error {
 		return err
 	}
 	return nil
+}
+
+func (u *usecase) GetNewest(data map[string]interface{}) (TweetData, error) {
+	index := int(data["index"].(float64))
+
+	tweet, err := u.dao.GetNewest(index)
+	if err != nil {
+		logger.Error(err)
+		return TweetData{}, err
+	}
+	return tweet, nil
 }

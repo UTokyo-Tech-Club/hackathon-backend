@@ -66,7 +66,7 @@ func initDBLocal() {
 		instanceConnectionName = variables.MustGetenv("INSTANCE_CONNECTION_NAME")
 	)
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s", dbUser, dbPwd, instanceConnectionName, dbName)
+	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?parseTime=true", dbUser, dbPwd, instanceConnectionName, dbName)
 	err := error(nil)
 	DB, err = sql.Open("mysql", dsn)
 	if err != nil {

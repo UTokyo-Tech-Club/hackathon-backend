@@ -8,7 +8,7 @@ import (
 func CreateTable() {
 	query := `CREATE TABLE IF NOT EXISTS tweet (
 		uid VARCHAR(255) PRIMARY KEY, 
-		user_uid VARCHAR(255), 
+		owner_uid VARCHAR(255), 
 		content TEXT, 
 		create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
 		update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)`

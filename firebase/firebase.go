@@ -2,7 +2,6 @@ package firebaseAuth
 
 import (
 	"context"
-	"encoding/json"
 	"hackathon-backend/utils/logger"
 	"os"
 
@@ -21,23 +20,17 @@ func Init() *firebase.App {
 	return fb
 }
 
-func ValidateToken(fb *firebase.App, data []byte) (*auth.Token, error) {
-
-	var authToken *AuthData
-	err := json.Unmarshal(data, &authToken)
-	if err != nil {
-		return nil, err
-	}
+func ValidateToken(fb *firebase.App, token string) (*auth.Token, error) {
 
 	client, err := fb.Auth(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := client.VerifyIDToken(context.Background(), authToken.Token)
+	idToken, err := client.VerifyIDToken(context.Background(), token)
 	if err != nil {
 		return nil, err
 	}
 
-	return token, nil
+	return idToken, nil
 }

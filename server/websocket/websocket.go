@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"encoding/json"
 	"fmt"
 	firebaseAuth "hackathon-backend/firebase"
 	"hackathon-backend/server"
@@ -88,7 +87,7 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 	// Allow all origins
 	wss.getUpgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
-	// Upgrade connection
+	// Upgrade connection to websocket
 	ws, err := wss.getUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		logger.Error(err)
@@ -105,56 +104,58 @@ func (wss *WebSocketServer) handleEndPoint(w http.ResponseWriter, r *http.Reques
 		wss.unregisterClient <- client
 	}()
 
-	// Setup controllers
-	controllers := server.NewControllers()
+	// Setup controllersAuth
+	controllers, controllersAuth := server.NewControllers()
 
 	for {
 		// Read message
-		_, p, err := ws.ReadMessage()
-		if err != nil {
-			logger.Error(err)
-			return
-		}
-
-		// Parse message
-		var msg *Message
-		if err := json.Unmarshal(p, &msg); err != nil {
+		var msg Message
+		if err := ws.ReadJSON(&msg); err != nil {
 			logger.Error(err)
 			continue
 		}
-		data := []byte(msg.Data)
+		data := msg.Data
 
-		// Pong message
-		if msg.Type == "sys" && msg.Action == "ping" {
-			ws.WriteMessage(websocket.TextMessage, []byte(`{"response": "pong"}`))
-			continue
+		// Process messages without authentication
+		if msgType, exists := controllers[msg.Type]; exists {
+			if action, exists := msgType.(map[string]interface{})[msg.Action]; exists {
+				if msg.Action != "ping" {
+					logger.Info("Processing message without auth: ", msg.Type, " ", msg.Action)
+				}
+				action.(func(*websocket.Conn, map[string]interface{}) error)(ws, data)
+				continue
+			}
 		}
 
 		// Guard until authentication
 		if idToken == nil {
-
 			if msg.Type != "user" || msg.Action != "auth" {
 				logger.Error("Must authenticate first")
 				continue
 			}
 
-			idToken, err = firebaseAuth.ValidateToken(fb, data)
+			idToken, err = firebaseAuth.ValidateToken(fb, data["token"].(string))
 			if err != nil {
 				logger.Error("Error verifying token: ", err)
 				continue
 			}
 
+			ws.WriteJSON(map[string]string{"error": "null"})
+			logger.Info("Authenticated: ", idToken.UID)
+
+			// Register user in server
 			wss.registerClient <- client
 		}
 
-		// Process messages
-		if msgType, exists := controllers[msg.Type]; exists {
+		// Process messages with authentication
+		if msgType, exists := controllersAuth[msg.Type]; exists {
 			if action, exists := msgType.(map[string]interface{})[msg.Action]; exists {
-				logger.Info("Processing message: ", idToken.UID, " ", msg.Type, " ", msg.Action)
-				action.(func(*websocket.Conn, *auth.Token, []byte) error)(ws, idToken, data)
+				logger.Info("Processing message with auth: ", idToken.UID, " ", msg.Type, " ", msg.Action)
+				action.(func(*websocket.Conn, *auth.Token, map[string]interface{}) error)(ws, idToken, data)
 				continue
 			}
 		}
+
 		logger.Error("Invalid message type or action: ", msg.Type, " ", msg.Action)
 	}
 }

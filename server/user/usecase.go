@@ -1,16 +1,15 @@
 package user
 
 import (
-	"encoding/json"
 	"hackathon-backend/utils/logger"
 
 	"firebase.google.com/go/auth"
 )
 
 type Usecase interface {
-	Register(token *auth.Token, data []byte) error
-	Edit(token *auth.Token, data []byte) error
-	GetProfileContent(token *auth.Token, data []byte) ([]byte, error)
+	Register(token *auth.Token) error
+	Edit(token *auth.Token, data map[string]interface{}) error
+	GetProfileContent(token *auth.Token, data map[string]interface{}) (map[string]interface{}, error)
 }
 
 type usecase struct {
@@ -23,7 +22,7 @@ func NewUsecase(dao Dao) Usecase {
 	}
 }
 
-func (u *usecase) Register(token *auth.Token, _ []byte) error {
+func (u *usecase) Register(token *auth.Token) error {
 
 	userData := UserData{
 		UID:      token.UID,
@@ -39,19 +38,13 @@ func (u *usecase) Register(token *auth.Token, _ []byte) error {
 	return nil
 }
 
-func (u *usecase) Edit(token *auth.Token, data []byte) error {
-
-	var newData *UserData
-	if err := json.Unmarshal(data, &newData); err != nil {
-		logger.Error(err)
-		return err
-	}
+func (u *usecase) Edit(token *auth.Token, data map[string]interface{}) error {
 
 	userData := UserData{
 		UID:            token.UID,
-		Username:       newData.Username,
-		PhotoURL:       newData.PhotoURL,
-		ProfileContent: newData.ProfileContent,
+		Username:       data["username"].(string),
+		PhotoURL:       data["photoURL"].(string),
+		ProfileContent: []byte(data["profileContent"].(string)),
 	}
 
 	if err := u.dao.Edit(userData); err != nil {
@@ -61,7 +54,7 @@ func (u *usecase) Edit(token *auth.Token, data []byte) error {
 	return nil
 }
 
-func (u *usecase) GetProfileContent(token *auth.Token, _ []byte) ([]byte, error) {
+func (u *usecase) GetProfileContent(token *auth.Token, _ map[string]interface{}) (map[string]interface{}, error) {
 
 	data := UserData{
 		UID: token.UID,
@@ -73,5 +66,5 @@ func (u *usecase) GetProfileContent(token *auth.Token, _ []byte) ([]byte, error)
 		return nil, err
 	}
 
-	return userData.ProfileContent, nil
+	return map[string]interface{}{"content": userData.ProfileContent}, nil
 }

@@ -19,8 +19,10 @@ func NewController(usecase Usecase) *Controller {
 	}
 }
 
-func (c *Controller) Register(ws *websocket.Conn, token *auth.Token, data []byte) error {
-	if err := c.usecase.Register(token, data); err != nil {
+// Register user info to the database
+// Will ignore if the user already exists
+func (c *Controller) Register(ws *websocket.Conn, token *auth.Token, _ map[string]interface{}) error {
+	if err := c.usecase.Register(token); err != nil {
 		logger.Error(err)
 		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return err
@@ -33,7 +35,7 @@ func (c *Controller) Register(ws *websocket.Conn, token *auth.Token, data []byte
 	return nil
 }
 
-func (c *Controller) Edit(ws *websocket.Conn, token *auth.Token, data []byte) error {
+func (c *Controller) Edit(ws *websocket.Conn, token *auth.Token, data map[string]interface{}) error {
 	if err := c.usecase.Edit(token, data); err != nil {
 		logger.Error(err)
 		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
@@ -47,17 +49,16 @@ func (c *Controller) Edit(ws *websocket.Conn, token *auth.Token, data []byte) er
 	return nil
 }
 
-func (c *Controller) GetProfileContent(ws *websocket.Conn, token *auth.Token, data []byte) error {
+func (c *Controller) GetProfileContent(ws *websocket.Conn, token *auth.Token, data map[string]interface{}) error {
 	content, err := c.usecase.GetProfileContent(token, data)
 	if err != nil {
 		logger.Error(err)
-		ws.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"content": "null", "error": "%s"}`, err.Error())))
+		ws.WriteJSON(map[string]interface{}{"content": "{}", "error": err.Error()})
 		return err
 	}
 
-	msg := fmt.Sprintf(`{"content": %s, "error": "null"}`, string(content))
-	ws.WriteMessage(websocket.TextMessage, []byte(msg))
+	ws.WriteJSON(map[string]interface{}{"data": content, "error": "null"})
 
-	logger.Info("Sent profile content: ", token.UID, msg)
+	logger.Info("Sent profile content: ", token.UID, fmt.Sprintf("%s", content))
 	return nil
 }
