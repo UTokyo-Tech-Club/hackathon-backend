@@ -3,6 +3,8 @@ package user
 import (
 	"hackathon-backend/utils/logger"
 
+	wss "hackathon-backend/server/websocketServer"
+
 	"firebase.google.com/go/auth"
 )
 
@@ -10,7 +12,7 @@ type Usecase interface {
 	Register(token *auth.Token) error
 	Edit(token *auth.Token, data map[string]interface{}) error
 	GetProfileContent(token *auth.Token, data map[string]interface{}) (map[string]interface{}, error)
-	Follow(token *auth.Token, data map[string]interface{}) error
+	Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 }
 
 type usecase struct {
@@ -72,9 +74,14 @@ func (u *usecase) GetProfileContent(token *auth.Token, _ map[string]interface{})
 	return map[string]interface{}{"content": userData.ProfileContent}, nil
 }
 
-func (u *usecase) Follow(token *auth.Token, data map[string]interface{}) error {
+func (u *usecase) Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
 
 	if err := u.dao.Follow(token.UID, data["userToFollowUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	if err := u.broadcaster.Follow(ws, token.UID, data["userToFollowUID"].(string)); err != nil {
 		logger.Error(err)
 		return err
 	}

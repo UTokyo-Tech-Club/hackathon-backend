@@ -23,7 +23,15 @@ func NewController(usecase Usecase) *Controller {
 // Register user info to the database
 // Will ignore if the user already exists
 func (c *Controller) Register(ws *wss.WSS, token *auth.Token, _ map[string]interface{}) error {
-	conn := ws.ClientUIDMap[token.UID].Conn
+	// ws.Lock.Lock()
+	// conn := ws.ClientUIDMap[token.UID].Conn
+	// ws.Lock.Unlock()
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		logger.Error("Client not found")
+		return nil
+	}
+	conn := client.(*wss.Client).Conn
 
 	if err := c.usecase.Register(token); err != nil {
 		logger.Error(err)
@@ -38,7 +46,13 @@ func (c *Controller) Register(ws *wss.WSS, token *auth.Token, _ map[string]inter
 }
 
 func (c *Controller) Edit(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
-	conn := ws.ClientUIDMap[token.UID].Conn
+	// conn := ws.ClientUIDMap[token.UID].Conn
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		logger.Error("Client not found")
+		return nil
+	}
+	conn := client.(*wss.Client).Conn
 
 	if err := c.usecase.Edit(token, data); err != nil {
 		logger.Error(err)
@@ -53,7 +67,13 @@ func (c *Controller) Edit(ws *wss.WSS, token *auth.Token, data map[string]interf
 }
 
 func (c *Controller) GetProfileContent(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
-	conn := ws.ClientUIDMap[token.UID].Conn
+	// conn := ws.ClientUIDMap[token.UID].Conn
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		logger.Error("Client not found")
+		return nil
+	}
+	conn := client.(*wss.Client).Conn
 
 	content, err := c.usecase.GetProfileContent(token, data)
 	if err != nil {
@@ -69,9 +89,15 @@ func (c *Controller) GetProfileContent(ws *wss.WSS, token *auth.Token, data map[
 }
 
 func (c *Controller) Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
-	conn := ws.ClientUIDMap[token.UID].Conn
+	// conn := ws.ClientUIDMap[token.UID].Conn
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		logger.Error("Client not found")
+		return nil
+	}
+	conn := client.(*wss.Client).Conn
 
-	if err := c.usecase.Follow(token, data); err != nil {
+	if err := c.usecase.Follow(ws, token, data); err != nil {
 		logger.Error(err)
 		conn.WriteMessage(websocket.TextMessage, []byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 		return err

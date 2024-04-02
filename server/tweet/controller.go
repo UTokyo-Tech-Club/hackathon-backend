@@ -20,7 +20,13 @@ func NewController(usecase Usecase) *Controller {
 }
 
 func (c *Controller) Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
-	conn := ws.ClientUIDMap[token.UID].Conn
+	// conn := ws.ClientUIDMap[token.UID].Conn
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		logger.Error("Client not found")
+		return nil
+	}
+	conn := client.(*wss.Client).Conn
 
 	if err := c.usecase.Post(token, data); err != nil {
 		logger.Error(err)

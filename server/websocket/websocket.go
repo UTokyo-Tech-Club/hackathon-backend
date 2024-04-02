@@ -24,8 +24,10 @@ func Init() {
 	}
 
 	ws = &wss.WSS{
-		Clients:          make(map[*wss.Client]bool),
-		ClientUIDMap:     make(map[string]*wss.Client),
+		// Clients:          make(map[*wss.Client]bool),
+		Clients: sync.Map{},
+		// ClientUIDMap:     make(map[string]*wss.Client),
+		ClientUIDMap:     sync.Map{},
 		RegisterClient:   make(chan *wss.Client),
 		UnregisterClient: make(chan *wss.Client),
 
@@ -50,20 +52,24 @@ func setupEventListeners() {
 		for {
 			select {
 			case client := <-ws.RegisterClient:
-				ws.Lock.Lock()
-				ws.Clients[client] = true
-				ws.ClientUIDMap[client.UID] = client
-				ws.Lock.Unlock()
+				// ws.Lock.Lock()
+				// ws.Clients[client] = true
+				// ws.ClientUIDMap[client.UID] = client
+				// ws.Lock.Unlock()
+				ws.Clients.Store(client, true)
+				ws.ClientUIDMap.Store(client.UID, client)
 			case client := <-ws.UnregisterClient:
-				ws.Lock.Lock()
-				if _, ok := ws.Clients[client]; ok {
-					delete(ws.Clients, client)
-					delete(ws.ClientUIDMap, client.UID)
-					if client.Conn != nil {
-						client.Conn.Close()
-					}
-				}
-				ws.Lock.Unlock()
+				// ws.Lock.Lock()
+				// if _, ok := ws.Clients[client]; ok {
+				// 	delete(ws.Clients, client)
+				// 	delete(ws.ClientUIDMap, client.UID)
+				// 	if client.Conn != nil {
+				// 		client.Conn.Close()
+				// 	}
+				// }
+				// ws.Lock.Unlock()
+				ws.Clients.Delete(client)
+				ws.ClientUIDMap.Delete(client.UID)
 			}
 		}
 	}()
@@ -140,14 +146,19 @@ func handleEndPoint(w http.ResponseWriter, r *http.Request) {
 			}()
 			client.UID = idToken.UID
 			client.Conn = socket
-			ws.RegisterClient <- client
-		}
 
-		// Wait until client is registered to WebSocket server
-		for {
-			if _, ok := ws.ClientUIDMap[idToken.UID]; ok {
-				break
+			ws.RegisterClient <- client
+
+			// Wait until client is registered to WebSocket server
+			for {
+				// if _, ok := ws.ClientUIDMap[idToken.UID]; ok {
+				// 	break
+				// }
+				if _, ok := ws.ClientUIDMap.Load(idToken.UID); ok {
+					break
+				}
 			}
+
 		}
 
 		// Process messages with authentication

@@ -38,7 +38,10 @@ func main() {
 	// Warning:
 	// This line must be executed to start the server on GCP
 	// Avoid calling fatal logger before this line if it is not critical
-	// If MySQL connection fails, the build will fail during deployment
+	// If MySQL or Neo4j connection fails, GCP build will fail during deployment
+	//
+	// Racing is an issue with the use of WebSocket; sync.Map should be used where data race is expected
+	// Use `go run -race .` to check for data races
 	//
 	// Note:
 	// Connection is first established with HTTP,

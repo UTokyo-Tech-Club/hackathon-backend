@@ -12,8 +12,10 @@ type Client struct {
 }
 
 type WSS struct {
-	Clients          map[*Client]bool
-	ClientUIDMap     map[string]*Client
+	// Clients          map[*Client]bool
+	Clients sync.Map
+	// ClientUIDMap     map[string]*Client
+	ClientUIDMap     sync.Map
 	RegisterClient   chan *Client
 	UnregisterClient chan *Client
 
