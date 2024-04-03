@@ -1,6 +1,7 @@
 package tweet
 
 import (
+	"errors"
 	"hackathon-backend/utils/logger"
 
 	wss "hackathon-backend/server/websocketServer"
@@ -20,11 +21,10 @@ func NewController(usecase Usecase) *Controller {
 }
 
 func (c *Controller) Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
-	// conn := ws.ClientUIDMap[token.UID].Conn
 	client, ok := ws.ClientUIDMap.Load(token.UID)
 	if !ok {
 		logger.Error("Client not found")
-		return nil
+		return errors.New("client not found")
 	}
 	conn := client.(*wss.Client).Conn
 

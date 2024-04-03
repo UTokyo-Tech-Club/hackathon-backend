@@ -7,6 +7,7 @@ import (
 
 type Broadcaster interface {
 	Follow(ws *wss.WSS, userUID string, userToFollowUID string) error
+	Unfollow(ws *wss.WSS, userUID string, userToUnfollowUID string) error
 }
 
 type broadcaster struct{}
@@ -21,7 +22,6 @@ func (b *broadcaster) Follow(ws *wss.WSS, userUID string, userToFollowUID string
 
 	client, ok := ws.ClientUIDMap.Load(userToFollowUID)
 	if !ok {
-		logger.Error("Client not found: ", userUID)
 		return nil
 	}
 	conn := client.(*wss.Client).Conn
@@ -29,5 +29,21 @@ func (b *broadcaster) Follow(ws *wss.WSS, userUID string, userToFollowUID string
 	conn.WriteJSON(map[string]interface{}{"type": "user", "action": "follow", "data": map[string]interface{}{"followerUID": userUID}})
 
 	logger.Info("Broadcasted follow: ", userUID, " -> ", userToFollowUID)
+	return nil
+}
+
+func (b *broadcaster) Unfollow(ws *wss.WSS, userUID string, userToUnfollowUID string) error {
+
+	logger.Info("Processing boradcast unfollow: ", userUID, " -> ", userToUnfollowUID)
+
+	client, ok := ws.ClientUIDMap.Load(userToUnfollowUID)
+	if !ok {
+		return nil
+	}
+	conn := client.(*wss.Client).Conn
+
+	conn.WriteJSON(map[string]interface{}{"type": "user", "action": "unfollow", "data": map[string]interface{}{"followerUID": userUID}})
+
+	logger.Info("Broadcasted unfollow: ", userUID, " -> ", userToUnfollowUID)
 	return nil
 }

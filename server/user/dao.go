@@ -13,6 +13,7 @@ type Dao interface {
 	Edit(d UserData) error
 	GetProfileContent(d *UserData) (*UserData, error)
 	Follow(userUID string, targetUID string) error
+	Unfollow(userUID string, targetUID string) error
 }
 
 type dao struct{}
@@ -96,6 +97,16 @@ func (dao *dao) GetProfileContent(d *UserData) (*UserData, error) {
 func (dao *dao) Follow(userUID string, targetUID string) error {
 	query := `MATCH (u:User {uid: $userUID}), (t:User {uid: $targetUID})
 			MERGE (u)-[:FOLLOWS]->(t)`
+	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "targetUID": targetUID}); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dao *dao) Unfollow(userUID string, targetUID string) error {
+	query := `MATCH (:User {uid: $userUID})-[f:FOLLOWS]->(:User {uid: $targetUID})
+			DELETE f`
 	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "targetUID": targetUID}); err != nil {
 		logger.Error(err)
 		return err

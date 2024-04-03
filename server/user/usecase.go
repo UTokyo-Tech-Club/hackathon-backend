@@ -13,6 +13,7 @@ type Usecase interface {
 	Edit(token *auth.Token, data map[string]interface{}) error
 	GetProfileContent(token *auth.Token, data map[string]interface{}) (map[string]interface{}, error)
 	Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
+	Unfollow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 }
 
 type usecase struct {
@@ -82,6 +83,21 @@ func (u *usecase) Follow(ws *wss.WSS, token *auth.Token, data map[string]interfa
 	}
 
 	if err := u.broadcaster.Follow(ws, token.UID, data["userToFollowUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) Unfollow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+
+	if err := u.dao.Unfollow(token.UID, data["userToUnfollowUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	if err := u.broadcaster.Unfollow(ws, token.UID, data["userToUnfollowUID"].(string)); err != nil {
 		logger.Error(err)
 		return err
 	}
