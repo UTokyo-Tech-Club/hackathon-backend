@@ -2,11 +2,13 @@ package tweet
 
 import (
 	"hackathon-backend/mysql"
+	"hackathon-backend/neo4j"
 	"hackathon-backend/utils/logger"
 )
 
 type Dao interface {
 	Post(tweet TweetData) error
+	Edit(tweet TweetData) error
 	GetNewest(tweet *TweetData, index int) (*TweetData, error)
 }
 
@@ -17,8 +19,27 @@ func NewDao() Dao {
 }
 
 func (dao *dao) Post(tweet TweetData) error {
+
+	// Push tweet data to MySQL
 	query := "INSERT INTO tweet (uid, owner_uid, content) VALUES (?, ?, ?)"
 	if _, err := mysql.Exec(query, tweet.UID, tweet.OwnerUID, tweet.Content); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	// Push tweet to Neo4j
+	query = "MATCH (u:User {uid: $uid}) CREATE (u)-[:POSTED]->(:Tweet {uid: $tweetUID})"
+	if _, err := neo4j.Exec(query, map[string]interface{}{"uid": tweet.OwnerUID, "tweetUID": tweet.UID}); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (dao *dao) Edit(tweet TweetData) error {
+	query := "UPDATE tweet SET content = ? WHERE uid = ?"
+	if _, err := mysql.Exec(query, tweet.Content, tweet.UID); err != nil {
 		logger.Error(err)
 		return err
 	}

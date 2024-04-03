@@ -23,12 +23,13 @@ func NewController(usecase Usecase) *Controller {
 func (c *Controller) Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
 	client, ok := ws.ClientUIDMap.Load(token.UID)
 	if !ok {
-		logger.Error("Client not found")
-		return errors.New("client not found")
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
 	}
 	conn := client.(*wss.Client).Conn
 
-	if err := c.usecase.Post(token, data); err != nil {
+	if err := c.usecase.Post(ws, token, data); err != nil {
 		logger.Error(err)
 		return err
 	}
@@ -36,6 +37,26 @@ func (c *Controller) Post(ws *wss.WSS, token *auth.Token, data map[string]interf
 	conn.WriteJSON(map[string]interface{}{"error": "null"})
 
 	logger.Info("Posted tweet: ", data["content"])
+	return nil
+}
+
+func (c *Controller) Edit(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
+	}
+	conn := client.(*wss.Client).Conn
+
+	if err := c.usecase.Edit(ws, token, data); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	conn.WriteJSON(map[string]interface{}{"error": "null"})
+
+	logger.Info("Edited tweet: ", data["tweetUID"])
 	return nil
 }
 

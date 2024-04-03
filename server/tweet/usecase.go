@@ -6,24 +6,29 @@ import (
 
 	"firebase.google.com/go/auth"
 	"github.com/google/uuid"
+
+	wss "hackathon-backend/server/websocketServer"
 )
 
 type Usecase interface {
-	Post(token *auth.Token, data map[string]interface{}) error
+	Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
+	Edit(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 	GetNewest(data map[string]interface{}) (*TweetData, error)
 }
 
 type usecase struct {
-	dao Dao
+	broadcaster Broadcaster
+	dao         Dao
 }
 
-func NewUsecase(dao Dao) Usecase {
+func NewUsecase(broadcaster Broadcaster, dao Dao) Usecase {
 	return &usecase{
-		dao: dao,
+		broadcaster: broadcaster,
+		dao:         dao,
 	}
 }
 
-func (u *usecase) Post(token *auth.Token, data map[string]interface{}) error {
+func (u *usecase) Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
 
 	tweetData := TweetData{
 		UID:       uuid.New().String(),
@@ -31,9 +36,31 @@ func (u *usecase) Post(token *auth.Token, data map[string]interface{}) error {
 		Content:   []byte(data["content"].(string)),
 		CreatedAt: time.Time{},
 		UpdatedAt: time.Time{},
+
+		OwnerUsername: token.Claims["name"].(string),
+		OwnerPhotoURL: token.Claims["picture"].(string),
 	}
 
 	if err := u.dao.Post(tweetData); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	if err := u.broadcaster.Post(ws, tweetData); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (u *usecase) Edit(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+
+	tweetData := TweetData{
+		UID:     data["tweetUID"].(string),
+		Content: []byte(data["content"].(string)),
+	}
+
+	if err := u.dao.Edit(tweetData); err != nil {
 		logger.Error(err)
 		return err
 	}

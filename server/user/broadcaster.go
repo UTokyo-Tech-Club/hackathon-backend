@@ -18,7 +18,7 @@ func NewBroadcaster() Broadcaster {
 
 func (b *broadcaster) Follow(ws *wss.WSS, userUID string, userToFollowUID string) error {
 
-	logger.Info("Processing boradcast follow: ", userUID, " -> ", userToFollowUID)
+	logger.Info("Processing broadcast follow: ", userUID, " -> ", userToFollowUID)
 
 	client, ok := ws.ClientUIDMap.Load(userToFollowUID)
 	if !ok {
@@ -34,7 +34,7 @@ func (b *broadcaster) Follow(ws *wss.WSS, userUID string, userToFollowUID string
 
 func (b *broadcaster) Unfollow(ws *wss.WSS, userUID string, userToUnfollowUID string) error {
 
-	logger.Info("Processing boradcast unfollow: ", userUID, " -> ", userToUnfollowUID)
+	logger.Info("Processing broadcast unfollow: ", userUID, " -> ", userToUnfollowUID)
 
 	client, ok := ws.ClientUIDMap.Load(userToUnfollowUID)
 	if !ok {

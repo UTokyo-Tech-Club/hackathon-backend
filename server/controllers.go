@@ -14,7 +14,8 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 	userCtl := user.NewController(userUsecase)
 
 	tweetDao := tweet.NewDao()
-	tweetUsecase := tweet.NewUsecase(tweetDao)
+	tweetBroadcaster := tweet.NewBroadcaster()
+	tweetUsecase := tweet.NewUsecase(tweetBroadcaster, tweetDao)
 	tweetCtl := tweet.NewController(tweetUsecase)
 
 	// Actions that require no authentication
@@ -42,6 +43,7 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 		},
 		"tweet": map[string]interface{}{
 			"post": tweetCtl.Post,
+			"edit": tweetCtl.Edit,
 		},
 	}
 
