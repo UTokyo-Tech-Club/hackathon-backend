@@ -12,6 +12,7 @@ type Dao interface {
 	Register(d UserData) error
 	Edit(d UserData) error
 	GetProfileContent(d *UserData) (*UserData, error)
+	PullMetadata(uid string) (*UserData, error)
 	Follow(userUID string, targetUID string) error
 	Unfollow(userUID string, targetUID string) error
 }
@@ -92,6 +93,28 @@ func (dao *dao) GetProfileContent(d *UserData) (*UserData, error) {
 
 	d.ProfileContent = profileContent
 	return d, nil
+}
+
+func (dao *dao) PullMetadata(uid string) (*UserData, error) {
+	var d UserData
+	var followingUsers []string
+
+	// Get following users
+	query := `MATCH (:User {uid: $userUID})-[:FOLLOWS]->(u:User)
+			RETURN u.uid`
+	results, err := neo4j.Exec(query, map[string]interface{}{"userUID": uid})
+	if err != nil {
+		logger.Error(err)
+		return &d, err
+	}
+
+	for _, record := range results {
+		followingUsers = append(followingUsers, record.Values[0].(string))
+	}
+
+	d.FollowingUsers = followingUsers
+
+	return &d, nil
 }
 
 func (dao *dao) Follow(userUID string, targetUID string) error {

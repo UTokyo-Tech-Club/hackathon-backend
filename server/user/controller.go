@@ -86,6 +86,35 @@ func (c *Controller) GetProfileContent(ws *wss.WSS, token *auth.Token, data map[
 	return nil
 }
 
+func (c *Controller) PullMetadata(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
+	}
+	conn := client.(*wss.Client).Conn
+	userData, err := c.usecase.PullMetadata(token)
+	if err != nil {
+		logger.Error(err)
+		conn.WriteJSON(map[string]interface{}{
+			"followingUsers":   userData.FollowingUsers,
+			"likedTweets":      userData.LikedTweets,
+			"bookmarkedTweets": userData.BookmarkedTweets,
+			"error":            err.Error()})
+		return err
+	}
+
+	conn.WriteJSON(map[string]interface{}{
+		"followingUsers":   userData.FollowingUsers,
+		"likedTweets":      userData.LikedTweets,
+		"bookmarkedTweets": userData.BookmarkedTweets,
+		"error":            "null"})
+
+	logger.Info("Pulled metadata for user: ", token.UID)
+	return nil
+}
+
 func (c *Controller) Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
 	client, ok := ws.ClientUIDMap.Load(token.UID)
 	if !ok {

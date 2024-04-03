@@ -12,6 +12,7 @@ type Usecase interface {
 	Register(token *auth.Token) error
 	Edit(token *auth.Token, data map[string]interface{}) error
 	GetProfileContent(token *auth.Token, data map[string]interface{}) (map[string]interface{}, error)
+	PullMetadata(token *auth.Token) (*UserData, error)
 	Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 	Unfollow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 }
@@ -73,6 +74,17 @@ func (u *usecase) GetProfileContent(token *auth.Token, _ map[string]interface{})
 	}
 
 	return map[string]interface{}{"content": userData.ProfileContent}, nil
+}
+
+func (u *usecase) PullMetadata(token *auth.Token) (*UserData, error) {
+
+	userData, err := u.dao.PullMetadata(token.UID)
+	if err != nil {
+		logger.Error(err)
+		return &UserData{}, err
+	}
+
+	return userData, nil
 }
 
 func (u *usecase) Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {

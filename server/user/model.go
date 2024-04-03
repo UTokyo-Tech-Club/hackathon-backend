@@ -14,4 +14,8 @@ type UserData struct {
 	PhotoURL       string          `json:"photoURL,omitempty"`
 	CreatedAt      time.Time       `json:"createdAt,omitempty"`
 	UpdatedAt      time.Time       `json:"updatedAt,omitempty"`
+
+	FollowingUsers   []string `json:"followingUsers,omitempty"`
+	LikedTweets      []string `json:"likedTweets,omitempty"`
+	BookmarkedTweets []string `json:"bookmarkedTweets,omitempty"`
 }

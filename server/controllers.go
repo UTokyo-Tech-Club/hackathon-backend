@@ -36,6 +36,7 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 			"auth":                userCtl.Register,
 			"edit":                userCtl.Edit,
 			"get_profile_content": userCtl.GetProfileContent,
+			"pull_metadata":       userCtl.PullMetadata,
 			"follow":              userCtl.Follow,
 			"unfollow":            userCtl.Unfollow,
 		},
