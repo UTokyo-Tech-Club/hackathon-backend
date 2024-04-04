@@ -99,7 +99,6 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 		return tweet, err
 	}
 	tweet.NumLikes = int(results[0].Values[0].(int64))
-	logger.Info(int(results[0].Values[0].(int64)), "likes")
 
 	return tweet, nil
 }

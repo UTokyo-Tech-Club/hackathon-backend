@@ -22,7 +22,7 @@ func (b *broadcaster) Post(ws *wss.WSS, tweet *TweetData) error {
 
 	ws.Clients.Range(func(key, _ interface{}) bool {
 		conn := key.(*wss.Client).Conn
-		conn.WriteJSON(map[string]interface{}{"type": "tweet", "action": "post", "data": tweet})
+		conn.WriteJSON(map[string]interface{}{"source": "server", "type": "tweet", "action": "post", "data": tweet})
 		return true
 	})
 
@@ -35,7 +35,7 @@ func (b *broadcaster) Edit(ws *wss.WSS, tweet *TweetData) error {
 
 	ws.Clients.Range(func(key, _ interface{}) bool {
 		conn := key.(*wss.Client).Conn
-		conn.WriteJSON(map[string]interface{}{"type": "tweet", "action": "edit", "data": tweet})
+		conn.WriteJSON(map[string]interface{}{"source": "server", "type": "tweet", "action": "edit", "data": tweet})
 		return true
 	})
 

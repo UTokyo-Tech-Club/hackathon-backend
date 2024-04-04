@@ -22,7 +22,7 @@ func NewController(usecase Usecase) *Controller {
 
 // Register user info to the database
 // Will ignore if the user already exists
-func (c *Controller) Register(ws *wss.WSS, token *auth.Token, _ map[string]interface{}) error {
+func (c *Controller) Register(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
 	client, ok := ws.ClientUIDMap.Load(token.UID)
 	if !ok {
 		err := errors.New("client not found")
@@ -33,11 +33,11 @@ func (c *Controller) Register(ws *wss.WSS, token *auth.Token, _ map[string]inter
 
 	if err := c.usecase.Register(token); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Registered user: ", token.UID)
 	return nil
@@ -54,11 +54,11 @@ func (c *Controller) Edit(ws *wss.WSS, token *auth.Token, data map[string]interf
 
 	if err := c.usecase.Edit(token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Updated user: ", token.UID)
 	return nil
@@ -76,11 +76,11 @@ func (c *Controller) GetProfileContent(ws *wss.WSS, token *auth.Token, data map[
 	content, err := c.usecase.GetProfileContent(token, data)
 	if err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"content": "{}", "error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "content": "{}", "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"data": content, "error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "data": content, "error": "null"})
 
 	logger.Info("Sent profile content: ", token.UID, fmt.Sprintf("%s", content))
 	return nil
@@ -98,6 +98,7 @@ func (c *Controller) PullMetadata(ws *wss.WSS, token *auth.Token, data map[strin
 	if err != nil {
 		logger.Error(err)
 		conn.WriteJSON(map[string]interface{}{
+			"source":           data["source"],
 			"followingUsers":   userData.FollowingUsers,
 			"likedTweets":      userData.LikedTweets,
 			"bookmarkedTweets": userData.BookmarkedTweets,
@@ -106,6 +107,7 @@ func (c *Controller) PullMetadata(ws *wss.WSS, token *auth.Token, data map[strin
 	}
 
 	conn.WriteJSON(map[string]interface{}{
+		"source":           data["source"],
 		"followingUsers":   userData.FollowingUsers,
 		"likedTweets":      userData.LikedTweets,
 		"bookmarkedTweets": userData.BookmarkedTweets,
@@ -126,11 +128,11 @@ func (c *Controller) Follow(ws *wss.WSS, token *auth.Token, data map[string]inte
 
 	if err := c.usecase.Follow(ws, token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Followed user: ", token.UID)
 	return nil
@@ -147,11 +149,11 @@ func (c *Controller) Unfollow(ws *wss.WSS, token *auth.Token, data map[string]in
 
 	if err := c.usecase.Unfollow(ws, token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Unfollowed user: ", token.UID)
 	return nil
@@ -168,11 +170,11 @@ func (c *Controller) Bookmark(ws *wss.WSS, token *auth.Token, data map[string]in
 
 	if err := c.usecase.Bookmark(ws, token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Bookmarked tweet: ", token.UID)
 	return nil
@@ -189,11 +191,11 @@ func (c *Controller) Unbookmark(ws *wss.WSS, token *auth.Token, data map[string]
 
 	if err := c.usecase.Unbookmark(ws, token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Unbookmarked tweet: ", token.UID)
 	return nil
@@ -210,11 +212,11 @@ func (c *Controller) Like(ws *wss.WSS, token *auth.Token, data map[string]interf
 
 	if err := c.usecase.Like(ws, token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Likeed tweet: ", token.UID)
 	return nil
@@ -231,11 +233,11 @@ func (c *Controller) Unlike(ws *wss.WSS, token *auth.Token, data map[string]inte
 
 	if err := c.usecase.Unlike(ws, token, data); err != nil {
 		logger.Error(err)
-		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": err.Error()})
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Unliked tweet: ", token.UID)
 	return nil

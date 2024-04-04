@@ -101,9 +101,9 @@ func (dao *dao) GetProfileContent(d *UserData) (*UserData, error) {
 
 func (dao *dao) PullMetadata(uid string) (*UserData, error) {
 	var d UserData
-	var followingUsers []string
-	var bookmarkedTweets []string
-	var likedTweets []string
+	var followingUsers []string = []string{}
+	var bookmarkedTweets []string = []string{}
+	var likedTweets []string = []string{}
 
 	// Get following users
 	query := `MATCH (:User {uid: $userUID})-[:FOLLOWS]->(u:User)

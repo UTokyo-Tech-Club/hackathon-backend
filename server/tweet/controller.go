@@ -34,7 +34,7 @@ func (c *Controller) Post(ws *wss.WSS, token *auth.Token, data map[string]interf
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Posted tweet: ", data["content"])
 	return nil
@@ -54,7 +54,7 @@ func (c *Controller) Edit(ws *wss.WSS, token *auth.Token, data map[string]interf
 		return err
 	}
 
-	conn.WriteJSON(map[string]interface{}{"error": "null"})
+	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
 	logger.Info("Edited tweet: ", data["tweetUID"])
 	return nil
@@ -64,11 +64,11 @@ func (c *Controller) GetNewest(ws *websocket.Conn, data map[string]interface{}) 
 	tweet, err := c.usecase.GetNewest(data)
 	if err != nil {
 		logger.Error(err)
-		ws.WriteJSON(map[string]interface{}{"data": "{}", "error": err.Error()})
+		ws.WriteJSON(map[string]interface{}{"source": data["source"], "data": "{}", "error": err.Error()})
 		return err
 	}
 
-	ws.WriteJSON(map[string]interface{}{"data": tweet, "error": "null"})
+	ws.WriteJSON(map[string]interface{}{"source": data["source"], "data": tweet, "error": "null"})
 
 	logger.Info("Sending tweet: ", tweet.OwnerUsername, string(tweet.Content))
 	return nil

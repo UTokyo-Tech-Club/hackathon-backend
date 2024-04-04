@@ -28,7 +28,7 @@ func (b *broadcaster) Follow(ws *wss.WSS, userUID string, userToFollowUID string
 	}
 	conn := client.(*wss.Client).Conn
 
-	conn.WriteJSON(map[string]interface{}{"type": "user", "action": "follow", "data": map[string]interface{}{"followerUID": userUID}})
+	conn.WriteJSON(map[string]interface{}{"source": "server", "type": "user", "action": "follow", "data": map[string]interface{}{"followerUID": userUID}})
 
 	logger.Info("Broadcasted follow: ", userUID, " -> ", userToFollowUID)
 	return nil
@@ -44,7 +44,7 @@ func (b *broadcaster) Unfollow(ws *wss.WSS, userUID string, userToUnfollowUID st
 	}
 	conn := client.(*wss.Client).Conn
 
-	conn.WriteJSON(map[string]interface{}{"type": "user", "action": "unfollow", "data": map[string]interface{}{"followerUID": userUID}})
+	conn.WriteJSON(map[string]interface{}{"source": "server", "type": "user", "action": "unfollow", "data": map[string]interface{}{"followerUID": userUID}})
 
 	logger.Info("Broadcasted unfollow: ", userUID, " -> ", userToUnfollowUID)
 	return nil
@@ -60,7 +60,7 @@ func (b *broadcaster) Like(ws *wss.WSS, userUID string, tweetUID string) error {
 	}
 	conn := client.(*wss.Client).Conn
 
-	conn.WriteJSON(map[string]interface{}{"type": "tweet", "action": "like", "data": map[string]interface{}{"tweetUID": tweetUID}})
+	conn.WriteJSON(map[string]interface{}{"source": "server", "type": "tweet", "action": "like", "data": map[string]interface{}{"tweetUID": tweetUID}})
 
 	logger.Info("Broadcasted like: ", userUID, " -> all")
 	return nil
@@ -76,7 +76,7 @@ func (b *broadcaster) Unlike(ws *wss.WSS, userUID string, tweetUID string) error
 	}
 	conn := client.(*wss.Client).Conn
 
-	conn.WriteJSON(map[string]interface{}{"type": "tweet", "action": "unlike", "data": map[string]interface{}{"tweetUID": tweetUID}})
+	conn.WriteJSON(map[string]interface{}{"source": "server", "type": "tweet", "action": "unlike", "data": map[string]interface{}{"tweetUID": tweetUID}})
 
 	logger.Info("Broadcasted unlike: ", userUID, " -> all")
 	return nil
