@@ -156,3 +156,87 @@ func (c *Controller) Unfollow(ws *wss.WSS, token *auth.Token, data map[string]in
 	logger.Info("Unfollowed user: ", token.UID)
 	return nil
 }
+
+func (c *Controller) Bookmark(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
+	}
+	conn := client.(*wss.Client).Conn
+
+	if err := c.usecase.Bookmark(ws, token, data); err != nil {
+		logger.Error(err)
+		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		return err
+	}
+
+	conn.WriteJSON(map[string]interface{}{"error": "null"})
+
+	logger.Info("Bookmarked tweet: ", token.UID)
+	return nil
+}
+
+func (c *Controller) Unbookmark(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
+	}
+	conn := client.(*wss.Client).Conn
+
+	if err := c.usecase.Unbookmark(ws, token, data); err != nil {
+		logger.Error(err)
+		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		return err
+	}
+
+	conn.WriteJSON(map[string]interface{}{"error": "null"})
+
+	logger.Info("Unbookmarked tweet: ", token.UID)
+	return nil
+}
+
+func (c *Controller) Like(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
+	}
+	conn := client.(*wss.Client).Conn
+
+	if err := c.usecase.Like(ws, token, data); err != nil {
+		logger.Error(err)
+		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		return err
+	}
+
+	conn.WriteJSON(map[string]interface{}{"error": "null"})
+
+	logger.Info("Likeed tweet: ", token.UID)
+	return nil
+}
+
+func (c *Controller) Unlike(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+	client, ok := ws.ClientUIDMap.Load(token.UID)
+	if !ok {
+		err := errors.New("client not found")
+		logger.Error(err)
+		return err
+	}
+	conn := client.(*wss.Client).Conn
+
+	if err := c.usecase.Unlike(ws, token, data); err != nil {
+		logger.Error(err)
+		conn.WriteJSON(map[string]interface{}{"error": err.Error()})
+		return err
+	}
+
+	conn.WriteJSON(map[string]interface{}{"error": "null"})
+
+	logger.Info("Unliked tweet: ", token.UID)
+	return nil
+}

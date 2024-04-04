@@ -171,5 +171,6 @@ func handleEndPoint(w http.ResponseWriter, r *http.Request) {
 		}
 
 		logger.Error("Invalid message type or action: ", msg.Type, " ", msg.Action)
+		socket.WriteJSON(map[string]interface{}{"error": "invalid type or action"})
 	}
 }

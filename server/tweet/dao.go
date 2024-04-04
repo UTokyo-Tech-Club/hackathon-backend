@@ -91,6 +91,16 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 		return tweet, err
 	}
 
+	// Retrieve number of likes
+	query = "MATCH (:User)-[:LIKES]->(t:Tweet {uid: $uid}) RETURN COUNT(t)"
+	results, err := neo4j.Exec(query, map[string]interface{}{"uid": tweet.UID})
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	tweet.NumLikes = int(results[0].Values[0].(int64))
+	logger.Info(int(results[0].Values[0].(int64)), "likes")
+
 	return tweet, nil
 }
 

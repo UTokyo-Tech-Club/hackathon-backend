@@ -15,6 +15,10 @@ type Usecase interface {
 	PullMetadata(token *auth.Token) (*UserData, error)
 	Follow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 	Unfollow(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
+	Bookmark(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
+	Unbookmark(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
+	Like(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
+	Unlike(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 }
 
 type usecase struct {
@@ -110,6 +114,56 @@ func (u *usecase) Unfollow(ws *wss.WSS, token *auth.Token, data map[string]inter
 	}
 
 	if err := u.broadcaster.Unfollow(ws, token.UID, data["userToUnfollowUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) Bookmark(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+
+	if err := u.dao.Bookmark(token.UID, data["tweeToBookmarkUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) Unbookmark(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+
+	if err := u.dao.Unbookmark(token.UID, data["tweeToUnbookmarkUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) Like(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+
+	if err := u.dao.Like(token.UID, data["tweeToLikeUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	if err := u.broadcaster.Like(ws, token.UID, data["tweeToLikeUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func (u *usecase) Unlike(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
+
+	if err := u.dao.Unlike(token.UID, data["tweeToUnlikeUID"].(string)); err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	if err := u.broadcaster.Unlike(ws, token.UID, data["tweeToUnlikeUID"].(string)); err != nil {
 		logger.Error(err)
 		return err
 	}

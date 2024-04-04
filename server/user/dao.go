@@ -15,6 +15,10 @@ type Dao interface {
 	PullMetadata(uid string) (*UserData, error)
 	Follow(userUID string, targetUID string) error
 	Unfollow(userUID string, targetUID string) error
+	Bookmark(userUID string, tweetUID string) error
+	Unbookmark(userUID string, tweetUID string) error
+	Like(userUID string, tweetUID string) error
+	Unlike(userUID string, tweetUID string) error
 }
 
 type dao struct{}
@@ -98,6 +102,8 @@ func (dao *dao) GetProfileContent(d *UserData) (*UserData, error) {
 func (dao *dao) PullMetadata(uid string) (*UserData, error) {
 	var d UserData
 	var followingUsers []string
+	var bookmarkedTweets []string
+	var likedTweets []string
 
 	// Get following users
 	query := `MATCH (:User {uid: $userUID})-[:FOLLOWS]->(u:User)
@@ -107,12 +113,36 @@ func (dao *dao) PullMetadata(uid string) (*UserData, error) {
 		logger.Error(err)
 		return &d, err
 	}
-
 	for _, record := range results {
 		followingUsers = append(followingUsers, record.Values[0].(string))
 	}
-
 	d.FollowingUsers = followingUsers
+
+	// Get bookmarked tweets
+	query = `MATCH (:User {uid: $userUID})-[:BOOKMARKS]->(t:Tweet)
+			RETURN t.uid`
+	results, err = neo4j.Exec(query, map[string]interface{}{"userUID": uid})
+	if err != nil {
+		logger.Error(err)
+		return &d, err
+	}
+	for _, record := range results {
+		bookmarkedTweets = append(bookmarkedTweets, record.Values[0].(string))
+	}
+	d.BookmarkedTweets = bookmarkedTweets
+
+	// Get liked tweets
+	query = `MATCH (:User {uid: $userUID})-[:LIKES]->(t:Tweet)
+			RETURN t.uid`
+	results, err = neo4j.Exec(query, map[string]interface{}{"userUID": uid})
+	if err != nil {
+		logger.Error(err)
+		return &d, err
+	}
+	for _, record := range results {
+		likedTweets = append(likedTweets, record.Values[0].(string))
+	}
+	d.LikedTweets = likedTweets
 
 	return &d, nil
 }
@@ -131,6 +161,46 @@ func (dao *dao) Unfollow(userUID string, targetUID string) error {
 	query := `MATCH (:User {uid: $userUID})-[f:FOLLOWS]->(:User {uid: $targetUID})
 			DELETE f`
 	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "targetUID": targetUID}); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dao *dao) Bookmark(userUID string, tweetUID string) error {
+	query := `MATCH (u:User {uid: $userUID}), (t:Tweet {uid: $tweetUID})
+			MERGE (u)-[:BOOKMARKS]->(t)`
+	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "tweetUID": tweetUID}); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dao *dao) Unbookmark(userUID string, tweetUID string) error {
+	query := `MATCH (:User {uid: $userUID})-[b:BOOKMARKS]->(:Tweet {uid: $tweetUID})
+			DELETE b`
+	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "tweetUID": tweetUID}); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dao *dao) Like(userUID string, tweetUID string) error {
+	query := `MATCH (u:User {uid: $userUID}), (t:Tweet {uid: $tweetUID})
+			MERGE (u)-[:LIKES]->(t)`
+	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "tweetUID": tweetUID}); err != nil {
+		logger.Error(err)
+		return err
+	}
+	return nil
+}
+
+func (dao *dao) Unlike(userUID string, tweetUID string) error {
+	query := `MATCH (:User {uid: $userUID})-[l:LIKES]->(:Tweet {uid: $tweetUID})
+			DELETE l`
+	if _, err := neo4j.Exec(query, map[string]interface{}{"userUID": userUID, "tweetUID": tweetUID}); err != nil {
 		logger.Error(err)
 		return err
 	}

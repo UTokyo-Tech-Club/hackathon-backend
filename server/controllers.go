@@ -40,6 +40,10 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 			"pull_metadata":       userCtl.PullMetadata,
 			"follow":              userCtl.Follow,
 			"unfollow":            userCtl.Unfollow,
+			"bookmark":            userCtl.Bookmark,
+			"unbookmark":          userCtl.Unbookmark,
+			"like":                userCtl.Like,
+			"unlike":              userCtl.Unlike,
 		},
 		"tweet": map[string]interface{}{
 			"post": tweetCtl.Post,
