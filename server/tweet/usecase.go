@@ -41,12 +41,12 @@ func (u *usecase) Post(ws *wss.WSS, token *auth.Token, data map[string]interface
 		OwnerPhotoURL: token.Claims["picture"].(string),
 	}
 
-	if err := u.dao.Post(tweetData); err != nil {
+	if err := u.dao.Post(&tweetData); err != nil {
 		logger.Error(err)
 		return err
 	}
 
-	if err := u.broadcaster.Post(ws, tweetData); err != nil {
+	if err := u.broadcaster.Post(ws, &tweetData); err != nil {
 		logger.Error(err)
 		return err
 	}
@@ -60,10 +60,18 @@ func (u *usecase) Edit(ws *wss.WSS, token *auth.Token, data map[string]interface
 		Content: []byte(data["content"].(string)),
 	}
 
-	if err := u.dao.Edit(tweetData); err != nil {
+	updated, err := u.dao.Edit(&tweetData)
+
+	if err != nil {
 		logger.Error(err)
 		return err
 	}
+
+	if err := u.broadcaster.Edit(ws, updated); err != nil {
+		logger.Error(err)
+		return err
+	}
+
 	return nil
 }
 

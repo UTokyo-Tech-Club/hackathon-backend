@@ -7,8 +7,8 @@ import (
 )
 
 type Dao interface {
-	Post(tweet TweetData) error
-	Edit(tweet TweetData) error
+	Post(tweet *TweetData) error
+	Edit(tweet *TweetData) (*TweetData, error)
 	GetNewest(tweet *TweetData, index int) (*TweetData, error)
 }
 
@@ -18,7 +18,7 @@ func NewDao() Dao {
 	return &dao{}
 }
 
-func (dao *dao) Post(tweet TweetData) error {
+func (dao *dao) Post(tweet *TweetData) error {
 
 	// Push tweet data to MySQL
 	query := "INSERT INTO tweet (uid, owner_uid, content) VALUES (?, ?, ?)"
@@ -37,13 +37,20 @@ func (dao *dao) Post(tweet TweetData) error {
 	return nil
 }
 
-func (dao *dao) Edit(tweet TweetData) error {
+func (dao *dao) Edit(tweet *TweetData) (*TweetData, error) {
 	query := "UPDATE tweet SET content = ? WHERE uid = ?"
 	if _, err := mysql.Exec(query, tweet.Content, tweet.UID); err != nil {
 		logger.Error(err)
-		return err
+		return &TweetData{}, err
 	}
-	return nil
+
+	new, err := getTweet(tweet.UID)
+	if err != nil {
+		logger.Error(err)
+		return &TweetData{}, err
+	}
+
+	return new, nil
 }
 
 func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
@@ -58,6 +65,48 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 	defer stmt.Close()
 
 	rows, err := mysql.DB.Query(query, index)
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	defer rows.Close()
+
+	rows.Next()
+	if err := rows.Scan(&tweet.UID, &tweet.OwnerUID, &tweet.Content, &tweet.CreatedAt, &tweet.UpdatedAt); err != nil {
+		logger.Error(err)
+		return tweet, nil
+	}
+
+	// Retrieve owner data
+	query = "SELECT username, photo_url FROM user WHERE uid = ?"
+	stmt, err = mysql.DB.Prepare(query)
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	defer stmt.Close()
+
+	if err = stmt.QueryRow(tweet.OwnerUID).Scan(&tweet.OwnerUsername, &tweet.OwnerPhotoURL); err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+
+	return tweet, nil
+}
+
+func getTweet(uid string) (*TweetData, error) {
+	tweet := &TweetData{}
+
+	// Retrieve tweet data
+	query := "SELECT * FROM tweet WHERE uid = ?"
+	stmt, err := mysql.DB.Prepare(query)
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	defer stmt.Close()
+
+	rows, err := mysql.DB.Query(query, uid)
 	if err != nil {
 		logger.Error(err)
 		return tweet, err
