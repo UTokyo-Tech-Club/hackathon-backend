@@ -27,6 +27,7 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 		"user": map[string]interface{}{},
 		"tweet": map[string]interface{}{
 			"get_newest": tweetCtl.GetNewest,
+			"get_single": tweetCtl.GetSingle,
 		},
 	}
 

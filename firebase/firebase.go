@@ -13,8 +13,18 @@ import (
 func Init() *firebase.App {
 	opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT")))
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
+	if fb == nil {
+		logger.Error("Firebase app not created")
+		return nil
+	}
+	ctx := context.Background()
+	if _, err := fb.Auth(ctx); err != nil {
+		logger.Error("Failed to establish connection with Firebase Auth: ", err)
+		return nil
+	}
 	if err != nil {
 		logger.Error("Error initializing firebase: ", err)
+		return nil
 	}
 	logger.Info("Firebase initialized")
 	return fb

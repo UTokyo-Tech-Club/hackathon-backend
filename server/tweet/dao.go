@@ -10,6 +10,7 @@ type Dao interface {
 	Post(tweet *TweetData) error
 	Edit(tweet *TweetData) (*TweetData, error)
 	GetNewest(tweet *TweetData, index int) (*TweetData, error)
+	GetSingle(tweet *TweetData, uid string) (*TweetData, error)
 }
 
 type dao struct{}
@@ -32,6 +33,15 @@ func (dao *dao) Post(tweet *TweetData) error {
 	if _, err := neo4j.Exec(query, map[string]interface{}{"uid": tweet.OwnerUID, "tweetUID": tweet.UID}); err != nil {
 		logger.Error(err)
 		return err
+	}
+
+	// Link tweet
+	if tweet.Link != "" {
+		query = "MATCH (t:Tweet {uid: $link}) CREATE (t)-[:LINKED]->(:Tweet {uid: $tweetUID})"
+		if _, err := neo4j.Exec(query, map[string]interface{}{"link": tweet.Link, "tweetUID": tweet.UID}); err != nil {
+			logger.Error(err)
+			return err
+		}
 	}
 
 	return nil
@@ -100,6 +110,28 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 	}
 	tweet.NumLikes = int(results[0].Values[0].(int64))
 
+	// Retrieve back links
+	query = "MATCH (t:Tweet)-[:LINKED]->(:Tweet {uid: $uid}) RETURN t.uid"
+	results, err = neo4j.Exec(query, map[string]interface{}{"uid": tweet.UID})
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	for _, result := range results {
+		tweet.LinksBack = append(tweet.LinksBack, result.Values[0].(string))
+	}
+
+	// Retrive front links
+	query = "MATCH (:Tweet {uid: $uid})-[:LINKED]->(t:Tweet) RETURN t.uid"
+	results, err = neo4j.Exec(query, map[string]interface{}{"uid": tweet.UID})
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	for _, result := range results {
+		tweet.LinksFront = append(tweet.LinksFront, result.Values[0].(string))
+	}
+
 	return tweet, nil
 }
 
@@ -143,4 +175,8 @@ func getTweet(uid string) (*TweetData, error) {
 	}
 
 	return tweet, nil
+}
+
+func (dao *dao) GetSingle(tweet *TweetData, uid string) (*TweetData, error) {
+	return getTweet(uid)
 }

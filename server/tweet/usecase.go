@@ -14,6 +14,7 @@ type Usecase interface {
 	Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 	Edit(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error
 	GetNewest(data map[string]interface{}) (*TweetData, error)
+	GetSingle(data map[string]interface{}) (*TweetData, error)
 }
 
 type usecase struct {
@@ -31,11 +32,14 @@ func NewUsecase(broadcaster Broadcaster, dao Dao) Usecase {
 func (u *usecase) Post(ws *wss.WSS, token *auth.Token, data map[string]interface{}) error {
 
 	tweetData := TweetData{
-		UID:       uuid.New().String(),
-		OwnerUID:  token.UID,
-		Content:   []byte(data["content"].(string)),
-		CreatedAt: time.Time{},
-		UpdatedAt: time.Time{},
+		UID:        uuid.New().String(),
+		OwnerUID:   token.UID,
+		Content:    []byte(data["content"].(string)),
+		Link:       data["link"].(string),
+		CreatedAt:  time.Time{},
+		UpdatedAt:  time.Time{},
+		LinksBack:  []string{},
+		LinksFront: []string{},
 
 		OwnerUsername: token.Claims["name"].(string),
 		OwnerPhotoURL: token.Claims["picture"].(string),
@@ -83,6 +87,18 @@ func (u *usecase) GetNewest(data map[string]interface{}) (*TweetData, error) {
 	if err != nil {
 		logger.Error(err)
 		return &newTweet, err
+	}
+	return tweet, nil
+}
+
+func (u *usecase) GetSingle(data map[string]interface{}) (*TweetData, error) {
+	uid := data["uid"].(string)
+
+	singleTweet := TweetData{}
+	tweet, err := u.dao.GetSingle(&singleTweet, uid)
+	if err != nil {
+		logger.Error(err)
+		return &singleTweet, err
 	}
 	return tweet, nil
 }

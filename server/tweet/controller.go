@@ -36,7 +36,7 @@ func (c *Controller) Post(ws *wss.WSS, token *auth.Token, data map[string]interf
 
 	conn.WriteJSON(map[string]interface{}{"source": data["source"], "error": "null"})
 
-	logger.Info("Posted tweet: ", data["content"])
+	logger.Info("Posted tweet: ", data["content"], data["link"])
 	return nil
 }
 
@@ -70,6 +70,20 @@ func (c *Controller) GetNewest(ws *websocket.Conn, data map[string]interface{}) 
 
 	ws.WriteJSON(map[string]interface{}{"source": data["source"], "data": tweet, "error": "null"})
 
-	logger.Info("Sending tweet: ", tweet.OwnerUsername, string(tweet.Content))
+	logger.Info("Sending tweet: ", tweet.OwnerUsername, string(tweet.Content), tweet.LinksFront, tweet.LinksBack)
+	return nil
+}
+
+func (c *Controller) GetSingle(ws *websocket.Conn, data map[string]interface{}) error {
+	tweet, err := c.usecase.GetSingle(data)
+	if err != nil {
+		logger.Error(err)
+		ws.WriteJSON(map[string]interface{}{"source": data["source"], "data": "{}", "error": err.Error()})
+		return err
+	}
+
+	ws.WriteJSON(map[string]interface{}{"source": data["source"], "data": tweet, "error": "null"})
+
+	logger.Info("Sending tweet: ", tweet.OwnerUsername, string(tweet.Content), tweet.LinksFront, tweet.LinksBack)
 	return nil
 }

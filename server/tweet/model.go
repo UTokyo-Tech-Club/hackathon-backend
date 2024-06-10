@@ -7,11 +7,14 @@ import (
 
 type TweetData struct {
 	// usecase - dao
-	UID       string          `json:"uid"`
-	OwnerUID  string          `json:"ownerUID"`
-	Content   json.RawMessage `json:"content"`
-	CreatedAt time.Time       `json:"createdAt,omitempty"`
-	UpdatedAt time.Time       `json:"udpatdAt,omitempty"`
+	UID        string          `json:"uid"`
+	OwnerUID   string          `json:"ownerUID"`
+	Content    json.RawMessage `json:"content"`
+	Link       string          `json:"link"`
+	LinksBack  []string        `json:"linksBack"`
+	LinksFront []string        `json:"linksFront"`
+	CreatedAt  time.Time       `json:"createdAt,omitempty"`
+	UpdatedAt  time.Time       `json:"udpatdAt,omitempty"`
 
 	// controller - usecase
 	OwnerUsername string   `json:"ownerUsername,omitempty"`

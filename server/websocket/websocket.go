@@ -52,22 +52,9 @@ func setupEventListeners() {
 		for {
 			select {
 			case client := <-ws.RegisterClient:
-				// ws.Lock.Lock()
-				// ws.Clients[client] = true
-				// ws.ClientUIDMap[client.UID] = client
-				// ws.Lock.Unlock()
 				ws.Clients.Store(client, true)
 				ws.ClientUIDMap.Store(client.UID, client)
 			case client := <-ws.UnregisterClient:
-				// ws.Lock.Lock()
-				// if _, ok := ws.Clients[client]; ok {
-				// 	delete(ws.Clients, client)
-				// 	delete(ws.ClientUIDMap, client.UID)
-				// 	if client.Conn != nil {
-				// 		client.Conn.Close()
-				// 	}
-				// }
-				// ws.Lock.Unlock()
 				ws.Clients.Delete(client)
 				ws.ClientUIDMap.Delete(client.UID)
 			}
@@ -76,7 +63,7 @@ func setupEventListeners() {
 }
 
 func handleHomePage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Home Page")
+	fmt.Fprintf(w, "Upgrade to WS at /ws")
 }
 
 // First establish HTTP connection, then upgrade to WebSocket
@@ -151,9 +138,6 @@ func handleEndPoint(w http.ResponseWriter, r *http.Request) {
 
 			// Wait until client is registered to WebSocket server
 			for {
-				// if _, ok := ws.ClientUIDMap[idToken.UID]; ok {
-				// 	break
-				// }
 				if _, ok := ws.ClientUIDMap.Load(idToken.UID); ok {
 					break
 				}
