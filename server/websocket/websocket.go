@@ -12,6 +12,7 @@ import (
 	wss "hackathon-backend/server/websocketServer"
 
 	"firebase.google.com/go/auth"
+	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
@@ -89,6 +90,25 @@ func handleEndPoint(w http.ResponseWriter, r *http.Request) {
 	// Setup controllers
 	controllers, controllersAuth := server.NewControllers()
 
+	// Add client to WebSocket server
+	var clientUid = uuid.New().String()
+	client := &wss.Client{}
+	defer func() {
+		logger.Warning("Client disconnected: ", client.UID)
+		ws.UnregisterClient <- client
+	}()
+	client.UID = clientUid
+	client.Conn = socket
+
+	ws.RegisterClient <- client
+
+	// Wait until client is registered to WebSocket server
+	for {
+		if _, ok := ws.ClientUIDMap.Load(clientUid); ok {
+			break
+		}
+	}
+
 	for {
 		// Read message
 		var msg Message
@@ -122,27 +142,22 @@ func handleEndPoint(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 
-			socket.WriteJSON(map[string]string{"error": "null"})
-			logger.Info("Authenticated: ", idToken.UID)
+			ws.UnregisterClient <- client
+			authenticatedClient := &wss.Client{}
+			authenticatedClient.UID = idToken.UID
+			authenticatedClient.Conn = socket
 
-			// Add client to WebSocket server
-			client := &wss.Client{}
-			defer func() {
-				logger.Warning("Client disconnected: ", client.UID)
-				ws.UnregisterClient <- client
-			}()
-			client.UID = idToken.UID
-			client.Conn = socket
-
-			ws.RegisterClient <- client
+			ws.RegisterClient <- authenticatedClient
 
 			// Wait until client is registered to WebSocket server
 			for {
-				if _, ok := ws.ClientUIDMap.Load(idToken.UID); ok {
+				if _, ok := ws.ClientUIDMap.Load(authenticatedClient.UID); ok {
 					break
 				}
 			}
 
+			socket.WriteJSON(map[string]string{"error": "null"})
+			logger.Info("Authenticated: ", idToken.UID)
 		}
 
 		// Process messages with authentication
