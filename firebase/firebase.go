@@ -2,6 +2,7 @@ package firebaseAuth
 
 import (
 	"context"
+	"fmt"
 	"hackathon-backend/utils/logger"
 	"os"
 
@@ -12,6 +13,7 @@ import (
 
 func Init() *firebase.App {
 	opt := option.WithCredentialsJSON([]byte(os.Getenv("FIREBASE_SERVICE_ACCOUNT")))
+	logger.Info(os.Getenv("FIREBASE_SERVICE_ACCOUNT"))
 	fb, err := firebase.NewApp(context.Background(), nil, opt)
 	if fb == nil {
 		logger.Error("Firebase app not created")
@@ -31,6 +33,9 @@ func Init() *firebase.App {
 }
 
 func ValidateToken(fb *firebase.App, token string) (*auth.Token, error) {
+	if fb == nil {
+		return nil, fmt.Errorf("firebase app is nil")
+	}
 
 	client, err := fb.Auth(context.Background())
 	if err != nil {

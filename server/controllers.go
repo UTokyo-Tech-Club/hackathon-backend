@@ -1,6 +1,7 @@
 package server
 
 import (
+	"hackathon-backend/server/comment"
 	"hackathon-backend/server/tweet"
 	"hackathon-backend/server/user"
 
@@ -17,6 +18,11 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 	tweetBroadcaster := tweet.NewBroadcaster()
 	tweetUsecase := tweet.NewUsecase(tweetBroadcaster, tweetDao)
 	tweetCtl := tweet.NewController(tweetUsecase)
+
+	commentDao := comment.NewDao()
+	commentBroadCaster := comment.NewBroadcaster()
+	commentUsecase := comment.NewUsecase(commentBroadCaster, commentDao)
+	commentCtl := comment.NewController(commentUsecase)
 
 	// Actions that require no authentication
 	// Args: *websocket.Conn, map[string]interface{}
@@ -49,6 +55,9 @@ func NewControllers() (map[string]interface{}, map[string]interface{}) {
 		"tweet": map[string]interface{}{
 			"post": tweetCtl.Post,
 			"edit": tweetCtl.Edit,
+		},
+		"comment": map[string]interface{}{
+			"post": commentCtl.Post,
 		},
 	}
 
