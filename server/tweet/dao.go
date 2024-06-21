@@ -146,10 +146,10 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 
 	// Retrieve comment data
 	var comments []string
-	var commentingUserUsernames []string
-	var commentingUserIconUrls []string
+	var commentingUserUIDs []string
+
 	for _, commentUID := range commentUIDs {
-		query = "SELECT * FROM comment WHERE uid = ?"
+		query = "SELECT comment, commenting_user_uid FROM comment WHERE uid = ?"
 		stmt, err = mysql.DB.Prepare(query)
 		if err != nil {
 			logger.Error(err)
@@ -168,17 +168,37 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 			if !rows.Next() {
 				break
 			}
-			var comment, username, iconUrl string
-			if err := rows.Scan(&comment, &username, &iconUrl); err != nil {
+			var comment, username string
+			if err := rows.Scan(&comment, &username); err != nil {
 				logger.Error(err)
 				return tweet, err
 			}
 			comments = append(comments, comment)
-			commentingUserUsernames = append(commentingUserUsernames, username)
-			commentingUserIconUrls = append(commentingUserIconUrls, iconUrl)
+			commentingUserUIDs = append(commentingUserUIDs, username)
 		}
 	}
 	tweet.Comments = comments
+
+	// retrieve commenting user data
+	var commentingUserUsernames []string
+	var commentingUserIconUrls []string
+	for _, commentingUserUID := range commentingUserUIDs {
+		query = "SELECT username, photo_url FROM user WHERE uid = ?"
+		stmt, err = mysql.DB.Prepare(query)
+		if err != nil {
+			logger.Error(err)
+			return tweet, err
+		}
+		defer stmt.Close()
+
+		var username, iconUrl string
+		if err = stmt.QueryRow(commentingUserUID).Scan(&username, &iconUrl); err != nil {
+			logger.Error(err)
+			return tweet, err
+		}
+		commentingUserUsernames = append(commentingUserUsernames, username)
+		commentingUserIconUrls = append(commentingUserIconUrls, iconUrl)
+	}
 	tweet.CommentingUserUsernames = commentingUserUsernames
 	tweet.CommentingUserIconUrls = commentingUserIconUrls
 
