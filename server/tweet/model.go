@@ -24,4 +24,8 @@ type TweetData struct {
 	NumLinks      int      `json:"numLinks,omitempty"`
 	NumViews      int      `json:"numViews,omitempty"`
 	Links         []string `json:"links,omitempty"`
+
+	Comments                []string `json:"comments,omitempty"`
+	CommentingUserUsernames []string `json:"commentingUserUsernames,omitempty"`
+	CommentingUserIconUrls  []string `json:"commentingUserIconUrls,omitempty"`
 }

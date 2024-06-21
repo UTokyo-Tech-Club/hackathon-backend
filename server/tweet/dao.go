@@ -132,6 +132,56 @@ func (dao *dao) GetNewest(tweet *TweetData, index int) (*TweetData, error) {
 		tweet.LinksFront = append(tweet.LinksFront, result.Values[0].(string))
 	}
 
+	// Retrieve comment uids
+	query = "MATCH (:Tweet {uid: $uid})-[:COMMENTED]->(c:Comment) RETURN c.uid"
+	results, err = neo4j.Exec(query, map[string]interface{}{"uid": tweet.UID})
+	var commentUIDs []string
+	if err != nil {
+		logger.Error(err)
+		return tweet, err
+	}
+	for _, result := range results {
+		commentUIDs = append(commentUIDs, result.Values[0].(string))
+	}
+
+	// Retrieve comment data
+	var comments []string
+	var commentingUserUsernames []string
+	var commentingUserIconUrls []string
+	for _, commentUID := range commentUIDs {
+		query = "SELECT * FROM comment WHERE uid = ?"
+		stmt, err = mysql.DB.Prepare(query)
+		if err != nil {
+			logger.Error(err)
+			return tweet, err
+		}
+		defer stmt.Close()
+
+		rows, err := mysql.DB.Query(query, commentUID)
+		if err != nil {
+			logger.Error(err)
+			return tweet, err
+		}
+		defer rows.Close()
+
+		for {
+			if !rows.Next() {
+				break
+			}
+			var comment, username, iconUrl string
+			if err := rows.Scan(&comment, &username, &iconUrl); err != nil {
+				logger.Error(err)
+				return tweet, err
+			}
+			comments = append(comments, comment)
+			commentingUserUsernames = append(commentingUserUsernames, username)
+			commentingUserIconUrls = append(commentingUserIconUrls, iconUrl)
+		}
+	}
+	tweet.Comments = comments
+	tweet.CommentingUserUsernames = commentingUserUsernames
+	tweet.CommentingUserIconUrls = commentingUserIconUrls
+
 	return tweet, nil
 }
 
