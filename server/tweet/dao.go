@@ -225,7 +225,7 @@ func getTweet(uid string) (*TweetData, error) {
 	defer rows.Close()
 
 	rows.Next()
-	if err := rows.Scan(&tweet.UID, &tweet.OwnerUID, &tweet.Content, &tweet.CreatedAt, &tweet.UpdatedAt); err != nil {
+	if err := rows.Scan(&tweet.UID, &tweet.OwnerUID, &tweet.Content, &tweet.CreatedAt, &tweet.UpdatedAt, &tweet.ImageUrl); err != nil {
 		logger.Error(err)
 		return tweet, nil
 	}
