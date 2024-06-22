@@ -40,6 +40,7 @@ func (u *usecase) Post(ws *wss.WSS, token *auth.Token, data map[string]interface
 		UpdatedAt:  time.Time{},
 		LinksBack:  []string{},
 		LinksFront: []string{},
+		ImageUrl:   data["imageUrl"].(string),
 
 		OwnerUsername: token.Claims["name"].(string),
 		OwnerPhotoURL: token.Claims["picture"].(string),

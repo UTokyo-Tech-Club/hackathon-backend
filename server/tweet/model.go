@@ -10,6 +10,7 @@ type TweetData struct {
 	UID        string          `json:"uid"`
 	OwnerUID   string          `json:"ownerUID"`
 	Content    json.RawMessage `json:"content"`
+	ImageUrl   string          `json:"imageUrl"`
 	Link       string          `json:"link"`
 	LinksBack  []string        `json:"linksBack"`
 	LinksFront []string        `json:"linksFront"`
