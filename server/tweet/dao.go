@@ -22,8 +22,8 @@ func NewDao() Dao {
 func (dao *dao) Post(tweet *TweetData) error {
 
 	// Push tweet data to MySQL
-	query := "INSERT INTO tweet (uid, owner_uid, content) VALUES (?, ?, ?)"
-	if _, err := mysql.Exec(query, tweet.UID, tweet.OwnerUID, tweet.Content); err != nil {
+	query := "INSERT INTO tweet (uid, owner_uid, content, image_url) VALUES (?, ?, ?, ?)"
+	if _, err := mysql.Exec(query, tweet.UID, tweet.OwnerUID, tweet.Content, tweet.ImageUrl); err != nil {
 		logger.Error(err)
 		return err
 	}
